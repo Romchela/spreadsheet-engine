@@ -40,10 +40,7 @@ public:
 };
 
 
-struct Formula {
-    std::vector<Addend> addends;
-};
-
+using Formula = std::vector<Addend>;
 using InputData = std::unordered_map<std::string, Formula>;
 using OutputData = std::unordered_map<std::string, ValueType>;
 

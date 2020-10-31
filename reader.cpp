@@ -49,10 +49,10 @@ InputData Reader::Read(std::ifstream& input_file) {
         for (const auto& it : addend_tokens) {
             try {
                 validate_cell(it);
-                input_data[cell].addends.push_back(AddendFactory::CellAddend(it));
+                input_data[cell].push_back(AddendFactory::CellAddend(it));
             } catch (ParserException& parserException) {
                 try {
-                    input_data[cell].addends.push_back(AddendFactory::ValueAddend(it));
+                    input_data[cell].push_back(AddendFactory::ValueAddend(it));
                 } catch (std::exception& e) {
                     throw ParserException("Addend " + it + " is not cell or value");
                 }

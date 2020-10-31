@@ -33,4 +33,33 @@ inline std::string trim(std::string s) {
     return s;
 }
 
+inline bool files_are_equal(const std::string& expected_path, const std::string& actual_path, std::string& error_message) {
+    std::ifstream expected_file(expected_path);
+    std::ifstream actual_file(actual_path);
+
+    std::string e, a;
+    bool equal = true;
+    while (getline(expected_file, e)) {
+        if (!getline(actual_file, a)) {
+            error_message = "Expected file size is greater than actual file size";
+            equal = false;
+            break;
+        }
+        if (e != a) {
+            error_message = "Expected:\n    " + e + "\nActual:\n    " + a;
+            equal = false;
+            break;
+        }
+    }
+
+    if (equal && getline(actual_file, a)) {
+        error_message = "Actual file size is greater than expected file size";
+        equal = false;
+    }
+
+    expected_file.close();
+    actual_file.close();
+    return equal;
+}
+
 #endif //SPREADSHEETENGINE_UTILS_H
