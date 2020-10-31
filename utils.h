@@ -20,8 +20,8 @@ public:
     }
 };
 
-// TODO: use std::to_string instead (mingw bug https://sourceforge.net/p/mingw-w64/mailman/message/36948917/)
-template<typename T> std::string to_str(const T &t) {
+// TODO: use std::to_string instead (mingw windows bug https://sourceforge.net/p/mingw-w64/mailman/message/36948917/)
+template<typename T> std::string to_str(const T& t) {
     std::stringstream ss;
     ss << t;
     return ss.str();

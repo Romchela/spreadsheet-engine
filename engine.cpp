@@ -22,15 +22,14 @@ inline bool check_correctness(const std::string& correct_solution_name, const st
 bool write_and_check(Solution& solution, const std::string& output_path, const std::string& solution_name,
                      const std::string& correct_solution_name, const std::string& extension) {
 
-    Writer writer;
-    bool compare_with_correct_solution = correct_solution_name.length() > 0;
+    bool compare_to_correct_solution = correct_solution_name.length() > 0;
     const std::string& cur_file_path = output_path + solution_name + extension;
     {
         Timer timer("    Writing in file time: ");
-        writer.write(solution.GetCurrentValues(), cur_file_path);
+        Writer::write(solution.GetCurrentValues(), cur_file_path);
     }
 
-    if (!compare_with_correct_solution) {
+    if (!compare_to_correct_solution) {
         return true;
     }
 
@@ -76,6 +75,7 @@ bool test_solution(Solution& solution, const InputData& initial_data, const Inpu
     return test_solution(solution, initial_data, modifications_data, output_path, solution_name, "");
 }
 
+// Check if file is ok
 inline bool validate_file(std::ifstream& s, const std::string& file_name) {
     if (!s.is_open()) {
         std::cout << "Unable to open file " << file_name << std::endl;
@@ -120,14 +120,16 @@ int main(int argc, char** argv) {
         output_path += '/';
     }
 
+    // Run simple one thread solution
     const std::string& correct_solution = "OneThreadSimple";
     bool success = test_solution(
             *new OneThreadSimpleSolution(), initial_data, modifications_data,
-            output_path,"OneThreadSimple");
+            output_path, correct_solution);
     if (!success) {
         return 1;
     }
 
+    // Test fast solution, compare results to correct_solution's outputs
     success = test_solution(
             *new FastSolution(), initial_data, modifications_data,
             output_path,"FastSolution", correct_solution);

@@ -1,7 +1,7 @@
 #include <cassert>
 #include "one-thread-simple.h"
 
-void OneThreadSimpleSolution::calculate(const std::string& cell) {
+void OneThreadSimpleSolution::Calculate(const std::string& cell) {
     ValueType value = 0;
     for (const auto& it : cells[cell].formula) {
         switch (it.type) {
@@ -12,11 +12,11 @@ void OneThreadSimpleSolution::calculate(const std::string& cell) {
                 auto& next_cell = next_it->second;
 
                 if (!next_cell.is_calculated) {
-                    calculate(next);
+                    Calculate(next);
                     assert(next_cell.is_calculated); // TODO: cycle check
                 }
 
-                value += next_cell.value;
+                value = sum(value, next_cell.value);
                 break;
             }
 
@@ -34,7 +34,7 @@ void OneThreadSimpleSolution::calculate(const std::string& cell) {
     c.value = value;
 }
 
-void OneThreadSimpleSolution::recalculate_dependencies(const std::string& cell) {
+void OneThreadSimpleSolution::RecalculateDependencies(const std::string& cell) {
     for (const auto& formula_it : cells[cell].formula) {
         if (formula_it.type == Addend::CELL) {
             cells[formula_it.value].dependencies.push_back(cell);
@@ -45,11 +45,11 @@ void OneThreadSimpleSolution::recalculate_dependencies(const std::string& cell) 
 void OneThreadSimpleSolution::InitialCalculate(const InputData& initial_data) {
     for (const auto& it : initial_data) {
         cells[it.first].formula = it.second;
-        recalculate_dependencies(it.first);
+        RecalculateDependencies(it.first);
     }
 
     for (const auto& it : initial_data) {
-        calculate(it.first);
+        Calculate(it.first);
     }
 }
 
@@ -57,11 +57,11 @@ void OneThreadSimpleSolution::ChangeCell(const std::string& cell, const Formula&
     auto& c = cells[cell];
     c.formula = formula;
 
-    calculate(cell);
-    recalculate_dependencies(cell);
+    Calculate(cell);
+    RecalculateDependencies(cell);
 
     for (const auto& dependency : c.dependencies) {
-        calculate(dependency);
+        Calculate(dependency);
     }
 }
 

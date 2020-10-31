@@ -1,7 +1,3 @@
-//
-// Created by r00533983 on 10/31/2020.
-//
-
 #ifndef SPREADSHEETENGINE_ONE_THREAD_SIMPLE_H
 #define SPREADSHEETENGINE_ONE_THREAD_SIMPLE_H
 
@@ -19,8 +15,8 @@ private:
 
     std::unordered_map<std::string, CellInfo> cells;
 
-    void calculate(const std::string& cell);
-    inline void recalculate_dependencies(const std::string& cell);
+    void Calculate(const std::string& cell);
+    inline void RecalculateDependencies(const std::string& cell);
 
 public:
     void InitialCalculate(const InputData& initial_data) override;
