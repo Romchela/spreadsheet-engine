@@ -11,12 +11,14 @@ using ValueType = int;
 #define to_value_type(x) (ValueType) std::stoi(x);
 
 struct Addend {
-    Addend() = default;
-
+    
     enum Type {
         CELL,
         VALUE
     };
+
+    Addend() = default;
+    Addend(Type type, std::string value) : type(type), value(value) {}
 
     Type type;
     std::string value;

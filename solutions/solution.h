@@ -13,7 +13,7 @@
 #include "../io-data.h"
 
 inline ValueType sum(ValueType a, ValueType b) {
-    const int milliseconds = 500;
+    const int milliseconds = 0;
 #ifdef _WIN32
     Sleep(milliseconds);
 #else

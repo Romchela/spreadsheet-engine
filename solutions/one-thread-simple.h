@@ -16,6 +16,7 @@ private:
     std::unordered_map<std::string, CellInfo> cells;
 
     void Calculate(const std::string& cell);
+    void Recalculate(const std::string& cell);
     inline void RecalculateDependencies(const std::string& cell);
 
 public:

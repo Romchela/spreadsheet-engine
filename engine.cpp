@@ -5,6 +5,7 @@
 #include "solutions/one-thread-simple.h"
 #include "solutions/fast.h"
 #include "writer.h"
+#include "solutions/solution.h"
 
 inline bool check_correctness(const std::string& correct_solution_name, const std::string& solution_name) {
     Timer timer("    File comparing time: ");

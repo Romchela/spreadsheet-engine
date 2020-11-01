@@ -1,4 +1,5 @@
 #include <fstream>
+#include <algorithm>
 #include "writer.h"
 
 void Writer::write(const OutputData& output_data, const std::string& output_file_path) {
@@ -10,7 +11,7 @@ void Writer::write(const OutputData& output_data, const std::string& output_file
         pos++;
     }
     
-    sort(v.begin(), v.end(), [](const CellResult& cell_a, const CellResult& cell_b) {
+    std::sort(v.begin(), v.end(), [](const CellResult& cell_a, const CellResult& cell_b) {
         const std::string& a = cell_a.first;
         const std::string& b = cell_b.first;
         if (a[0] < b[0]) {

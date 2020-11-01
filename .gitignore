@@ -12,3 +12,7 @@ _deps
 cmake-build-debug/
 cmake-build-release/
 .idea/
+Debug/
+Release/
+x64/
+x86/

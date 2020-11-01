@@ -34,6 +34,31 @@ void OneThreadSimpleSolution::Calculate(const std::string& cell) {
     c.value = value;
 }
 
+void OneThreadSimpleSolution::Recalculate(const std::string& cell) {
+    ValueType value = 0;
+    for (const auto& it : cells[cell].formula) {
+        switch (it.type) {
+            case Addend::CELL: {
+                const std::string& next = it.value;
+                value = sum(value, cells[next].value);
+                break;
+            }
+
+            case Addend::VALUE:
+                value += to_value_type(it.value);
+                break;
+
+            default:
+                assert(false);
+        }
+    }
+    cells[cell].value = value;
+
+    for (const auto& it : cells[cell].dependencies) {
+        Recalculate(it);
+    }
+}
+
 void OneThreadSimpleSolution::RecalculateDependencies(const std::string& cell) {
     for (const auto& formula_it : cells[cell].formula) {
         if (formula_it.type == Addend::CELL) {
@@ -57,12 +82,8 @@ void OneThreadSimpleSolution::ChangeCell(const std::string& cell, const Formula&
     auto& c = cells[cell];
     c.formula = formula;
 
-    Calculate(cell);
     RecalculateDependencies(cell);
-
-    for (const auto& dependency : c.dependencies) {
-        Calculate(dependency);
-    }
+    Recalculate(cell);
 }
 
 OutputData OneThreadSimpleSolution::GetCurrentValues() {
