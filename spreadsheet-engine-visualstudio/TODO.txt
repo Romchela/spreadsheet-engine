@@ -1,0 +1,7 @@
+* refactoring (better code)
+* README.md
+* comments
+* several parallel solutions
+* build and run scripts for Windows and Linux
+* test on linux
+* code style (naming)
