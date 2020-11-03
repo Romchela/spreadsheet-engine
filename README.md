@@ -117,9 +117,9 @@ Fast solution uses 8 threads.
 
 ![](benchmark.png)
 
-1) InitialCalculate OneThreadSimple `8813 ms` vs Fast `3094 ms`. Fast solution **2.8** times faster.
+1) InitialCalculate OneThreadSimple `8813 ms` vs Fast `3094 ms`. Fast solution **2.8 times faster**.
 2) ChangeCell for medium and small works quite fast (both solutions) `~20 ms`.
-3) ChangeCell for large OneThreadSimple `5801 ms` vs Fast `3886 ms`. Fast solution **1.5** times faster.
+3) ChangeCell for large OneThreadSimple `5801 ms` vs Fast `3886 ms`. Fast solution **1.5 times faster**.
 
 ## TODO and possible optimizations
 
