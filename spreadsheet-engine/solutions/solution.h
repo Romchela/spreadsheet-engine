@@ -2,23 +2,15 @@
 #define SPREADSHEETENGINE_SOLUTION_H
 
 #include <iostream>
-
-#ifdef _WIN32
-#include <Windows.h>
-#else
 #include <thread>
 #include <chrono>
-#endif
 
 #include "../io-data.h"
 
-inline ValueType sum(ValueType a, ValueType b) {
-    const int milliseconds = 0;
-#ifdef _WIN32
-    Sleep(milliseconds);
-#else
-    std::this_thread::sleep_for(std::chrono::milliseconds(milliseconds));
-#endif
+const int milliseconds = 0;
+
+inline ValueType sum(ValueType a, ValueType b) {    
+    //std::this_thread::sleep_for(std::chrono::milliseconds(milliseconds));
     return a + b;
 }
 

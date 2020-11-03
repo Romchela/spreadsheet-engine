@@ -31,8 +31,6 @@ private:
         Formula formula;
         std::atomic<int> unresolved_cells_count;
     };
-    
-    std::atomic<int> recalculation_count = 0;
 
     // Formula of these cells contains only numbers
     Concurrency::concurrent_vector<std::string> starting_cells;
@@ -45,10 +43,6 @@ private:
 
     // Queue of jobs. Each job is to calculate something for the cell which is stored in queue.
     Concurrency::concurrent_queue<std::string> queue;
-
-    // concurrent_unordered_set doesn't work in C++17 (it uses deprecated method).
-    // Use concurrent_unordered_map instead (value is useless param here).
-    Concurrency::concurrent_unordered_map<std::string, bool> need_to_recalculate;
 
     std::atomic<int> calculated_cells_count = 0;
 

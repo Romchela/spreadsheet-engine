@@ -207,7 +207,7 @@ void FastSolution::RecalculateDAG(const std::string& cell, const Formula& formul
 }
 
 void FastSolution::RecalculateCellsThreadJob() {
-    while (recalculation_count > 0 || !queue.empty()) {
+    while (!queue.empty()) {
         std::string cell;
         bool success = queue.try_pop(cell);
         if (!success) {
@@ -215,7 +215,6 @@ void FastSolution::RecalculateCellsThreadJob() {
         }
 
         auto& info = cell_info.at(cell);
-
         if (info->is_calculated.load()) {
             continue;
         }
@@ -246,7 +245,6 @@ void FastSolution::RecalculateCellsThreadJob() {
                 default:
                     assert(false);
             }
-
             if (!can_calculate) {
                 break;
             }
@@ -262,8 +260,6 @@ void FastSolution::RecalculateCellsThreadJob() {
         info->is_calculated.store(true);
         info->mutex.unlock();
 
-        recalculation_count--;
-
         for (auto it : DAG[cell]) {
             const std::string& next = it.first;
             if (!cell_info.at(it.first)->is_calculated.load()) {
@@ -274,25 +270,20 @@ void FastSolution::RecalculateCellsThreadJob() {
 }
 
 void FastSolution::TraverseDAGThreadJob() {
-    int retry_count = 10;
-    while (retry_count > 0 || !queue.empty()) {
+    while (!queue.empty()) {
         std::string cell;
         bool success = queue.try_pop(cell);
         if (!success) {
-            retry_count--;
             continue;
         }
-
-        retry_count = 10;
         
         auto& info = cell_info.at(cell);
 
-        if (need_to_recalculate.find(cell) != need_to_recalculate.end()) {
+        if (!info->is_calculated.load()) {
             continue;
         }
 
-        need_to_recalculate.insert(std::make_pair(cell, true));
-        info->is_calculated = false;
+        info->is_calculated.store(false);
 
         for (auto it : DAG[cell]) {
             const std::string& next = it.first;
@@ -306,13 +297,9 @@ void FastSolution::ChangeCell(const std::string& cell, const Formula& formula) {
 
     RecalculateDAG(cell, formula);
 
-    need_to_recalculate.clear();
-
     queue.clear();
     queue.push(cell);
     runMultipleThreads([&]() { TraverseDAGThreadJob(); });
-
-    recalculation_count = need_to_recalculate.size();
 
     queue.clear();
     queue.push(cell);
