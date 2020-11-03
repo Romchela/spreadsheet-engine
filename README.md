@@ -111,6 +111,14 @@ We change `A` cell. Firstly, parallel building of an array of reachable cells fr
 
 ## Benchmark
 
+Intel(R) Core(TM) i7-8550U CPU @ 1.80GHz 1.99 GHz RAM 16.0 GB x64.
+Fast solution uses 8 threads.
+
+![Run result](https://github.com/romchela/spreadsheet-engine/blob/master/benchmark.png?raw=true)
+
+1) InitialCalculate OneThreadSimple `8813 ms` vs Fast `3094 ms`. Fast solution **2.8** times faster.
+2) ChangeCell for medium and small works quite fast (both solutions) `~20 ms`.
+3) ChangeCell for large OneThreadSimple `5801 ms` vs Fast `3886 ms`. Fast solution **1.5** times faster.
 
 ## TODO and possible optimizations
 
@@ -118,3 +126,4 @@ We change `A` cell. Firstly, parallel building of an array of reachable cells fr
 2) Currently cells identifies as string name, we can do mapping string -> int and work with int everywhere instead of string. It can increase performance of hash maps.
 3) [Fast solution] After cells are changed, we need to recalulate DAG and some edges shoud be deleted. Unfortunately, concurrent_unordered_map doesn't support deletion, so we just marked the edge as removed. After a lot of modifications we can store a lot of useless deleted edges, so we need to implement a background job which in some period of time will rebuild DAG (explicit removal of unused edges).
 4) [Fast solution] If we call a ChangeCell method for a cell which has total dependency count around 99% nodes, it will work a bit slower than call InitialCalculate and build all graph from ground up. So, we need to store total dependency count for each cell and choose how to update cell value depending on that value.
+5) [Fast solution] Profiling shows expected thing that a lot of performance depends on concurrent data structures implementations. We can try different implementations to choose better one.
