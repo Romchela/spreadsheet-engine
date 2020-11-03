@@ -114,7 +114,8 @@ We change `A` cell. Firstly, parallel building of an array of reachable cells fr
 Intel(R) Core(TM) i7-8550U CPU @ 1.80GHz 1.99 GHz RAM 16.0 GB x64.
 Fast solution uses 8 threads.
 
-![Run result](https://github.com/romchela/spreadsheet-engine/blob/master/benchmark.png?raw=true)
+
+![Benchmark](https://github.com/romchela/spreadsheet-engine/blob/master/benchmark.png)
 
 1) InitialCalculate OneThreadSimple `8813 ms` vs Fast `3094 ms`. Fast solution **2.8** times faster.
 2) ChangeCell for medium and small works quite fast (both solutions) `~20 ms`.
