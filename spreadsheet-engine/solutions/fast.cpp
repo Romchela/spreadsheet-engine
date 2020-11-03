@@ -94,17 +94,21 @@ void FastSolution::ParallelBuildDAG(const InputData& input_data) {
 
 void FastSolution::InitialValuesCalculationThreadJob() {
     int cells_count = cell_info.size();
+    std::string cell = "";
+    std::string new_cell = "";
 
     while (calculated_cells_count.load() < cells_count) {
-        std::string cell;
-        bool success = queue.try_pop(cell);
-        if (!success) {
-            continue;
+        if (cell.size() == 0) {
+            bool success = queue.try_pop(cell);
+            if (!success) {
+                continue;
+            }
         }
 
         auto& c_info = cell_info.at(cell);
 
         if (c_info->is_calculated.load()) {
+            cell = "";
             continue;
         }
 
@@ -131,6 +135,9 @@ void FastSolution::InitialValuesCalculationThreadJob() {
             }
         }
        
+        bool has_new_cell = false;
+        new_cell = "";
+
         if (!c_info->is_calculated.load()) {
             c_info->mutex.lock();
             if (!c_info->is_calculated.load()) {
@@ -144,13 +151,20 @@ void FastSolution::InitialValuesCalculationThreadJob() {
                     if (!next->is_calculated.load()) {
                         next->unresolved_cells_count--;
                         if (next->unresolved_cells_count.load() == 0) {
-                            queue.push(it.first);
+                            if (!has_new_cell) {
+                                has_new_cell = true;
+                                new_cell = it.first;
+                            } else {
+                                queue.push(it.first);
+                            }
                         }
                     }
                 }
             }
             c_info->mutex.unlock();
         }
+
+        cell = has_new_cell ? new_cell : "";
     }
 }
 
@@ -207,15 +221,20 @@ void FastSolution::RecalculateDAG(const std::string& cell, const Formula& formul
 }
 
 void FastSolution::RecalculateCellsThreadJob() {
+    std::string cell = "";
+    std::string new_cell = "";
+
     while (!queue.empty()) {
-        std::string cell;
-        bool success = queue.try_pop(cell);
-        if (!success) {
-            continue;
+        if (cell.size() == 0) {
+            bool success = queue.try_pop(cell);
+            if (!success) {
+                continue;
+            }
         }
 
         auto& info = cell_info.at(cell);
         if (info->is_calculated.load()) {
+            cell = "";
             continue;
         }
 
@@ -232,7 +251,6 @@ void FastSolution::RecalculateCellsThreadJob() {
                     } else {
                         value = sum(value, next_info->value.load());
                     }
-
                     break;
                 }
 
@@ -252,43 +270,71 @@ void FastSolution::RecalculateCellsThreadJob() {
 
         if (!can_calculate) {
             queue.push(cell);
+            cell = "";
             continue;
         }
 
-        info->mutex.lock();
-        info->value.store(value);
-        info->is_calculated.store(true);
-        info->mutex.unlock();
+        if (info->is_calculated.load()) {
+            cell = "";
+            continue;
+        }
 
+        info->is_calculated.store(true);
+        info->value.store(value);
+
+        bool has_new_cell = false;
+        new_cell = "";
         for (auto it : DAG[cell]) {
             const std::string& next = it.first;
             if (!cell_info.at(it.first)->is_calculated.load()) {
-                queue.push(next);
+                if (!has_new_cell) {
+                    has_new_cell = true;
+                    new_cell = next;
+                } else {
+                    queue.push(next);
+                }
             }
         }
+
+        cell = has_new_cell ? new_cell : "";
     }
 }
 
 void FastSolution::TraverseDAGThreadJob() {
+    std::string cell = "";
+    std::string new_cell = "";
+
     while (!queue.empty()) {
-        std::string cell;
-        bool success = queue.try_pop(cell);
-        if (!success) {
-            continue;
+        if (cell.size() == 0) {
+            bool success = queue.try_pop(cell);
+            if (!success) {
+                continue;
+            }
         }
         
         auto& info = cell_info.at(cell);
 
         if (!info->is_calculated.load()) {
+            cell = "";
             continue;
         }
 
         info->is_calculated.store(false);
 
+        bool has_new_cell = false;
+        new_cell = "";
         for (auto it : DAG[cell]) {
             const std::string& next = it.first;
-            queue.push(next);
+            if (cell_info.at(next)->is_calculated.load()) {      
+                if (!has_new_cell) {
+                    new_cell = next;
+                    has_new_cell = true;
+                } else {
+                    queue.push(next);
+                }
+            }
         }
+        cell = has_new_cell ? new_cell : "";
     }
 }
 
@@ -296,7 +342,6 @@ void FastSolution::ChangeCell(const std::string& cell, const Formula& formula) {
     cell_info[cell]->formula = formula;
 
     RecalculateDAG(cell, formula);
-
     queue.clear();
     queue.push(cell);
     runMultipleThreads([&]() { TraverseDAGThreadJob(); });
