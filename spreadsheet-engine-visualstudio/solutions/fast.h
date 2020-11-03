@@ -17,7 +17,9 @@
 // More details: https://docs.microsoft.com/ru-ru/cpp/parallel/concrt/parallel-containers-and-objects
 class FastSolution : public Solution {
 private:
-    using Edges = Concurrency::concurrent_unordered_map<std::string, bool>;
+
+    using IsDeleted = bool;
+    using Edges = Concurrency::concurrent_unordered_map<std::string, IsDeleted>;
     struct CellInfo {
         CellInfo() = default;
         CellInfo(const Formula& formula) : 
@@ -44,13 +46,14 @@ private:
     // Queue of jobs. Each job is to calculate something for the cell which is stored in queue.
     Concurrency::concurrent_queue<std::string> queue;
 
-    // don't work set
+    // concurrent_unordered_set doesn't work in C++17 (it uses deprecated method).
+    // Use concurrent_unordered_map instead (value is useless param here).
     Concurrency::concurrent_unordered_map<std::string, bool> need_to_recalculate;
-    Concurrency::concurrent_vector<std::string> top_sort_recalculations;
 
     std::atomic<int> calculated_cells_count = 0;
 
     void BuildDAG(bool parallel, const InputData& input_data);
+    // For testing purpose
     void SequentialBuildDAG(const InputData& input_data);
     void ParallelBuildDAG(const InputData& input_data);
 
@@ -60,11 +63,8 @@ private:
     void ParallelValuesCalculation();
     void InitialValuesCalculationThreadJob();
 
-
     void RecalculateCellsThreadJob();
     void TraverseDAGThreadJob();
-    void BuildTopSortRecalculations(const std::string& cell);
-
 
 public:
 
@@ -75,6 +75,13 @@ public:
     void ChangeCell(const std::string& cell, const Formula& formula) override;
 
     OutputData GetCurrentValues() override;
+
+    ~FastSolution() {
+        for (const auto& it : cell_info) {
+            delete it.second;
+        }
+        cell_info.clear();
+    }
 };
 
 #endif //SPREADSHEETENGINE_FAST_H

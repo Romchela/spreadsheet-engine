@@ -168,7 +168,6 @@ void FastSolution::ParallelValuesCalculation() {
 #endif
 }
 
-
 void FastSolution::InitialCalculate(const InputData& input_data) {
 #ifdef _DEBUG
     {
@@ -176,7 +175,7 @@ void FastSolution::InitialCalculate(const InputData& input_data) {
         SequentialBuildDAG(input_data);
     }
 #endif
-    
+
     {
         Timer timer("        Parallel building DAG time: ");
         ParallelBuildDAG(input_data);
@@ -190,7 +189,9 @@ void FastSolution::InitialCalculate(const InputData& input_data) {
 
 // -------------- Change formula of a cell --------------
 
+// Not really critical number of operations, we can do it in one thread.
 void FastSolution::RecalculateDAG(const std::string& cell, const Formula& formula) {
+     
     for (const auto& formula_it : cell_info[cell]->formula) {
         if (formula_it.type == Addend::CELL) {
             DAG[formula_it.value][cell] = true;

@@ -24,9 +24,9 @@ inline ValueType sum(ValueType a, ValueType b) {
 
 class Solution {
 public:
+    virtual void InitialCalculate(const InputData& inputData) = 0;
     virtual void ChangeCell(const std::string& cell, const Formula& formula) = 0;
     virtual OutputData GetCurrentValues() = 0;
-    virtual void InitialCalculate(const InputData& inputData) = 0;
 };
 
 #endif //SPREADSHEETENGINE_SOLUTION_H

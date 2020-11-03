@@ -60,14 +60,14 @@ bool test_solution(Solution& solution, const InputData& initial_data, const Inpu
     }
 
 
-    // Changing cells according to modifications_data.
+    // Changing cells according to modifications_data (one by one).
     {
-        Timer timer("    [large] ChangeCell method 1 call in average: ", modifications_large_data.size());
-        for (const auto& it : modifications_large_data) {
+        Timer timer("    [small] ChangeCell method 1 call in average: ", modifications_small_data.size());
+        for (const auto& it : modifications_small_data) {
             solution.ChangeCell(it.first, it.second);
         }
     }
-    if (!write_and_check(solution, output_path, solution_name, correct_solution_name, ".modifications_large.txt")) {
+    if (!write_and_check(solution, output_path, solution_name, correct_solution_name, ".modifications_small.txt")) {
         return false;
     }
 
@@ -82,12 +82,12 @@ bool test_solution(Solution& solution, const InputData& initial_data, const Inpu
     }
 
     {
-        Timer timer("    [small] ChangeCell method 1 call in average: ", modifications_small_data.size());
-        for (const auto& it : modifications_small_data) {
+        Timer timer("    [large] ChangeCell method 1 call in average: ", modifications_large_data.size());
+        for (const auto& it : modifications_large_data) {
             solution.ChangeCell(it.first, it.second);
         }
     }
-    if (!write_and_check(solution, output_path, solution_name, correct_solution_name, ".modifications_small.txt")) {
+    if (!write_and_check(solution, output_path, solution_name, correct_solution_name, ".modifications_large.txt")) {
         return false;
     }
     

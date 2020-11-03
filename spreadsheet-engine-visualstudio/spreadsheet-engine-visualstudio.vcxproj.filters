@@ -54,30 +54,4 @@
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
-  <ItemGroup>
-    <Text Include="inputs\2_initial_large.txt">
-      <Filter>Resource Files</Filter>
-    </Text>
-    <Text Include="inputs\2_modifications_large.txt">
-      <Filter>Resource Files</Filter>
-    </Text>
-    <Text Include="outputs\FastSolution.initial.txt">
-      <Filter>Resource Files</Filter>
-    </Text>
-    <Text Include="outputs\FastSolution.modifications.txt">
-      <Filter>Resource Files</Filter>
-    </Text>
-    <Text Include="outputs\OneThreadSimple.initial.txt">
-      <Filter>Resource Files</Filter>
-    </Text>
-    <Text Include="outputs\OneThreadSimple.modifications.txt">
-      <Filter>Resource Files</Filter>
-    </Text>
-    <Text Include="inputs\1_initial.txt">
-      <Filter>Resource Files</Filter>
-    </Text>
-    <Text Include="inputs\1_modifications_small.txt">
-      <Filter>Resource Files</Filter>
-    </Text>
-  </ItemGroup>
 </Project>

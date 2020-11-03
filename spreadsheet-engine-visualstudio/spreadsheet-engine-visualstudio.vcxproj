@@ -156,16 +156,6 @@
     <ClInclude Include="utils.h" />
     <ClInclude Include="writer.h" />
   </ItemGroup>
-  <ItemGroup>
-    <Text Include="inputs\1_initial.txt" />
-    <Text Include="inputs\1_modifications_small.txt" />
-    <Text Include="inputs\2_initial_large.txt" />
-    <Text Include="inputs\2_modifications_large.txt" />
-    <Text Include="outputs\FastSolution.initial.txt" />
-    <Text Include="outputs\FastSolution.modifications.txt" />
-    <Text Include="outputs\OneThreadSimple.initial.txt" />
-    <Text Include="outputs\OneThreadSimple.modifications.txt" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
