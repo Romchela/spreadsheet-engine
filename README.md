@@ -108,6 +108,9 @@ We change `A` cell. Firstly, parallel building of an array of reachable cells fr
 
 **Space complexity:** O(g)
 
+## Requirements
+
+C++17, visual studio, windows x64.
 
 ## Benchmark
 
@@ -128,3 +131,5 @@ Fast solution uses 8 threads.
 3) [Fast solution] After cells are changed, we need to recalulate DAG and some edges shoud be deleted. Unfortunately, concurrent_unordered_map doesn't support deletion, so we just marked the edge as removed. After a lot of modifications we can store a lot of useless deleted edges, so we need to implement a background job which in some period of time will rebuild DAG (explicit removal of unused edges).
 4) [Fast solution] If we call a ChangeCell method for a cell which has total dependency count around 99% nodes, it will work a bit slower than call InitialCalculate and build all graph from ground up. So, we need to store total dependency count for each cell and choose how to update cell value depending on that value.
 5) [Fast solution] Profiling shows expected thing that a lot of performance depends on concurrent data structures implementations. We can try different implementations to choose better one.
+6) Optimize IO (std::ifstream, std::ofstream slow?)
+7) Version for linux/macOS.
