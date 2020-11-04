@@ -121,7 +121,7 @@ C++17, visual studio, windows x64.
 AMD Ryzen 7 3700 X 8-Core Processor 3.59 Ghz 16 GB RAM x64.
 Fast solution uses 16 threads.
 
-![](benchmark3.png)
+![](benchmark3.jpg)
 
 1) InitialCalculate OneThreadSimple `2003 ms` vs Fast `328 ms`. Fast solution **6.1 times faster**.
 2) ChangeCell for medium and small works quite fast (both solutions) `< 10 ms`.
@@ -130,7 +130,7 @@ Fast solution uses 16 threads.
 Intel(R) Core(TM) i7-8550U CPU @ 1.80GHz 1.99 GHz RAM 16.0 GB x64.
 Fast solution uses 8 threads.
 
-![](benchmark2.png)
+![](benchmark2.PNG)
 
 1) InitialCalculate OneThreadSimple `2765 ms` vs Fast `690 ms`. Fast solution **4 times faster**.
 2) ChangeCell for medium and small works quite fast (both solutions) `~20 ms`.
