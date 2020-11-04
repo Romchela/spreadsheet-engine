@@ -53,5 +53,14 @@
     <ClInclude Include="solutions\solution.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="concurrentqueue.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="blockingconcurrentqueue.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="lightweightsemaphore.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

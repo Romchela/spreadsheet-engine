@@ -10,21 +10,23 @@ class OneThreadSimpleSolution: public Solution {
 private:
 
     struct CellInfo {
-        std::unordered_set<std::string> dependencies;
+        std::unordered_set<int> dependencies;
         bool is_calculated = false;
         ValueType value;
         Formula formula;
+        std::string name;
     };
 
-    std::unordered_map<std::string, CellInfo> cells;
+    std::vector<CellInfo> cells;
 
-    std::unordered_set<std::string> need_to_recalculate;
-    std::vector<std::string> top_sort_recalculations;
+    std::unordered_set<int> need_to_recalculate;
+    std::vector<int> top_sort_recalculations;
+    std::unordered_map<std::string, int> id_by_name;
 
-    void Calculate(const std::string& cell);
-    void BuildTopSortRecalculations(const std::string& cell);
-    void CalculateDependencies(const std::string& cell);
-    void RecalculateDependencies(const std::string& cell, const Formula& formula);
+    void Calculate(int cell);
+    void BuildTopSortRecalculations(int cell);
+    void CalculateDependencies(int cell);
+    void RecalculateDependencies(int cell, const Formula& formula);
 
 public:
 

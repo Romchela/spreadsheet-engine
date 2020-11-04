@@ -8,20 +8,20 @@
 
 // -------------- Common methods--------------
 
-inline ValueType FastSolution::CalculateCellValue(const std::string& cell, const Formula& formula) {
+inline ValueType FastSolution::CalculateCellValue(int cell, const Formula& formula) {
     ValueType value = 0;
     for (const auto& it : formula) {
         switch (it.type) {
             case Addend::CELL: {
-                const std::string& addend_cell = it.value;
-                auto& addend_info = cell_info.at(addend_cell);
+                int addend_cell = it.value;
+                auto& addend_info = cell_info[addend_cell];
                 assert(addend_info->is_calculated.load());
                 value = sum(value, addend_info->value.load());
                 break;
             }
 
             case Addend::VALUE: {
-                ValueType addend = to_value_type(it.value);
+                ValueType addend = it.value;
                 value = sum(value, addend);
                 break;
             }
@@ -54,16 +54,23 @@ inline void runMultipleThreads(const std::function<void()>& function) {
 
 void FastSolution::BuildDAG(bool parallel, const InputData& input_data) {
     DAG.clear();
+    cell_info.clear();
+    id_by_name.clear();
+    DAG.resize(input_data.size());
+    cell_info.resize(input_data.size());
+    starting_cells.clear();
 
-    auto add_edges = [&](const std::string& cell, const Formula& formula) {
-        CellInfo* info = new CellInfo(formula);
-        cell_info.insert(std::make_pair(cell, info));
+    auto add_edges = [&](const InputCellInfo& cell_info_io) {
+        CellInfo* info = new CellInfo(cell_info_io.formula, cell_info_io.name);
+        int cell = cell_info_io.id;
+        cell_info[cell] = info;
+        id_by_name[cell_info_io.name] = cell;
 
         bool just_value = true;
-        for (const auto& formula_it : formula) {
+        for (const auto& formula_it : cell_info_io.formula) {
             if (formula_it.type == Addend::CELL) {
-                std::string next = formula_it.value;
-                DAG[next][cell] = false;
+                int next = formula_it.value;
+                DAG[next].push_back(std::make_pair(cell, false));
                 just_value = false;
                 info->unresolved_cells_count++;
             }
@@ -73,7 +80,7 @@ void FastSolution::BuildDAG(bool parallel, const InputData& input_data) {
         }
     };
 
-    auto lambda = [&](std::pair<std::string, Formula> it) { add_edges(it.first, it.second); };
+    auto lambda = [&](InputCellInfo it) { add_edges(it); };
 
     if (parallel) {
         std::for_each(std::execution::par_unseq, std::begin(input_data), std::end(input_data), lambda);
@@ -94,21 +101,17 @@ void FastSolution::ParallelBuildDAG(const InputData& input_data) {
 
 void FastSolution::InitialValuesCalculationThreadJob() {
     int cells_count = cell_info.size();
-    std::string cell = "";
-    std::string new_cell = "";
+    int cell;
 
     while (calculated_cells_count.load() < cells_count) {
-        if (cell.size() == 0) {
-            bool success = queue.try_pop(cell);
-            if (!success) {
-                continue;
-            }
+        bool success = queue.try_pop(cell);
+        if (!success) {
+            continue;
         }
 
-        auto& c_info = cell_info.at(cell);
+        auto& c_info = cell_info[cell];
 
         if (c_info->is_calculated.load()) {
-            cell = "";
             continue;
         }
 
@@ -117,7 +120,7 @@ void FastSolution::InitialValuesCalculationThreadJob() {
         for (const auto& it : formula) {
             switch (it.type) {
             case Addend::CELL: {
-                const std::string& addend_cell = it.value;
+                int addend_cell = it.value;
                 auto& addend_info = cell_info.at(addend_cell);
                 assert(addend_info->is_calculated.load());
                 value = sum(value, addend_info->value.load());
@@ -125,7 +128,7 @@ void FastSolution::InitialValuesCalculationThreadJob() {
             }
 
             case Addend::VALUE: {
-                ValueType addend = to_value_type(it.value);
+                ValueType addend = it.value;
                 value = sum(value, addend);
                 break;
             }
@@ -135,45 +138,38 @@ void FastSolution::InitialValuesCalculationThreadJob() {
             }
         }
        
-        bool has_new_cell = false;
-        new_cell = "";
 
-        if (!c_info->is_calculated.load()) {
-            c_info->mutex.lock();
-            if (!c_info->is_calculated.load()) {
-                c_info->value.store(value);
-                c_info->is_calculated.store(true);
-                calculated_cells_count++;
+        bool expected = false;
+        bool ok = c_info->is_calculated.compare_exchange_strong(expected, true);
+        if (!ok) {
+            continue;
+        }   
+        
+        c_info->value.store(value);
+        calculated_cells_count++;
 
-                for (const auto& it : DAG[cell]) {
-                    const std::string& next_str = it.first;
-                    const auto& next = cell_info.at(next_str);
-                    if (!next->is_calculated.load()) {
-                        next->unresolved_cells_count--;
-                        if (next->unresolved_cells_count.load() == 0) {
-                            if (!has_new_cell) {
-                                has_new_cell = true;
-                                new_cell = it.first;
-                            } else {
-                                queue.push(it.first);
-                            }
-                        }
-                    }
+        for (const auto& it : DAG[cell]) {
+            int next_str = it.first;
+            const auto& next = cell_info.at(next_str);
+                
+            if (!next->is_calculated.load()) {
+                next->unresolved_cells_count--;
+                if (next->unresolved_cells_count.load() == 0) {
+                    queue.push(it.first);
                 }
             }
-            c_info->mutex.unlock();
         }
-
-        cell = has_new_cell ? new_cell : "";
     }
 }
 
 
 void FastSolution::ParallelValuesCalculation() {
-   queue.clear();
+    queue.clear();
     for (const auto& it : starting_cells) {
+        cell_info.at(it)->total_dependency_count = 1;
         queue.push(it);
     }
+    
     runMultipleThreads([&]() { InitialValuesCalculationThreadJob(); });
 
 #ifdef _DEBUG
@@ -184,11 +180,13 @@ void FastSolution::ParallelValuesCalculation() {
 
 void FastSolution::InitialCalculate(const InputData& input_data) {
 #ifdef _DEBUG
-    {
+    /*{
         Timer timer("        Building DAG time: ");
         SequentialBuildDAG(input_data);
-    }
+    }*/
 #endif
+
+    state = input_data;
 
     {
         Timer timer("        Parallel building DAG time: ");
@@ -204,37 +202,38 @@ void FastSolution::InitialCalculate(const InputData& input_data) {
 // -------------- Change formula of a cell --------------
 
 // Not really critical number of operations, we can do it in one thread.
-void FastSolution::RecalculateDAG(const std::string& cell, const Formula& formula) {
+void FastSolution::RecalculateDAG(int cell, const Formula& formula) {
      
     for (const auto& formula_it : cell_info[cell]->formula) {
         if (formula_it.type == Addend::CELL) {
-            DAG[formula_it.value][cell] = true;
+            for (auto& cell_it : DAG[formula_it.value]) {
+                if (cell_it.first == cell) {
+                    cell_it.second = true;
+                }
+            }
         }
     }
     cell_info[cell]->formula = formula;
 
     for (const auto& formula_it : cell_info[cell]->formula) {
         if (formula_it.type == Addend::CELL) {
-            DAG[formula_it.value][cell] = false;
+            DAG[formula_it.value].push_back(std::make_pair(cell, false));
         }
     }
 }
 
 void FastSolution::RecalculateCellsThreadJob() {
-    std::string cell = "";
-    std::string new_cell = "";
-
+    int cell;
     while (!queue.empty()) {
-        if (cell.size() == 0) {
-            bool success = queue.try_pop(cell);
-            if (!success) {
-                continue;
-            }
+        bool success = queue.try_pop(cell);
+        if (!success) {
+            continue;
         }
 
         auto& info = cell_info.at(cell);
+
+        
         if (info->is_calculated.load()) {
-            cell = "";
             continue;
         }
 
@@ -244,18 +243,19 @@ void FastSolution::RecalculateCellsThreadJob() {
         for (const auto& it : info->formula) {
             switch (it.type) {
                 case Addend::CELL: {
-                    const std::string& next = it.value;
+                    int next = it.value;
                     const auto& next_info = cell_info.at(next);
                     if (!next_info->is_calculated.load()) {
                         can_calculate = false;
                     } else {
                         value = sum(value, next_info->value.load());
                     }
+
                     break;
                 }
 
                 case Addend::VALUE: {
-                    ValueType addend = to_value_type(it.value);
+                    ValueType addend = it.value;
                     value = sum(value, addend);
                     break;
                 }
@@ -263,6 +263,7 @@ void FastSolution::RecalculateCellsThreadJob() {
                 default:
                     assert(false);
             }
+
             if (!can_calculate) {
                 break;
             }
@@ -270,93 +271,83 @@ void FastSolution::RecalculateCellsThreadJob() {
 
         if (!can_calculate) {
             queue.push(cell);
-            cell = "";
             continue;
         }
 
-        if (info->is_calculated.load()) {
-            cell = "";
+        bool expected = false;
+        bool ok = info->is_calculated.compare_exchange_strong(expected, true);
+        if (!ok) {
             continue;
         }
-
-        info->is_calculated.store(true);
         info->value.store(value);
+       
+        recalculation_count--;
 
-        bool has_new_cell = false;
-        new_cell = "";
-        for (auto it : DAG[cell]) {
-            const std::string& next = it.first;
-            if (!cell_info.at(it.first)->is_calculated.load()) {
-                if (!has_new_cell) {
-                    has_new_cell = true;
-                    new_cell = next;
-                } else {
-                    queue.push(next);
-                }
+        for (const auto& it : DAG[cell]) {
+            int next = it.first;
+            if (!it.second && !cell_info.at(next)->is_calculated.load()) {
+                queue.push(next);
             }
         }
-
-        cell = has_new_cell ? new_cell : "";
     }
 }
 
 void FastSolution::TraverseDAGThreadJob() {
-    std::string cell = "";
-    std::string new_cell = "";
-
+    int cell;
     while (!queue.empty()) {
-        if (cell.size() == 0) {
-            bool success = queue.try_pop(cell);
-            if (!success) {
-                continue;
-            }
-        }
-        
-        auto& info = cell_info.at(cell);
-
-        if (!info->is_calculated.load()) {
-            cell = "";
+        bool success = queue.try_pop(cell);
+        if (!success) {
             continue;
         }
 
-        info->is_calculated.store(false);
+        auto& info = cell_info.at(cell);
 
-        bool has_new_cell = false;
-        new_cell = "";
-        for (auto it : DAG[cell]) {
-            const std::string& next = it.first;
-            if (cell_info.at(next)->is_calculated.load()) {      
-                if (!has_new_cell) {
-                    new_cell = next;
-                    has_new_cell = true;
-                } else {
-                    queue.push(next);
-                }
+        bool expected = true;
+        bool ok = cell_info.at(cell)->is_calculated.compare_exchange_strong(expected, false);
+        if (!ok) {
+            continue;
+        }
+
+        count_to_recalculate++;
+
+        for (const auto& it : DAG[cell]) {
+            int next = it.first;
+            if (!it.second && cell_info.at(next)->is_calculated.load()) {
+                queue.push(next);
             }
         }
-        cell = has_new_cell ? new_cell : "";
     }
 }
 
 void FastSolution::ChangeCell(const std::string& cell, const Formula& formula) {
-    cell_info[cell]->formula = formula;
-
-    RecalculateDAG(cell, formula);
-    queue.clear();
-    queue.push(cell);
-    runMultipleThreads([&]() { TraverseDAGThreadJob(); });
+    int cell_id = id_by_name[cell];
+    state[cell_id].formula = formula;
+    
+    RecalculateDAG(cell_id, formula);
 
     queue.clear();
-    queue.push(cell);
-    runMultipleThreads([&]() { RecalculateCellsThreadJob(); });
+    queue.push(cell_id);
+    count_to_recalculate = 0;
+
+    {
+        //Timer timer("TraverseDAGThreadJob time: ");
+        runMultipleThreads([&]() { TraverseDAGThreadJob(); });
+    }
+    
+    queue.clear();
+    queue.push(cell_id);
+    {
+        //Timer timer("RecalculateCellsThreadJob time: ");
+        runMultipleThreads([&]() { RecalculateCellsThreadJob(); });
+    }
 }
 
 // -------------- Return current state of cells --------------
 
 OutputData FastSolution::GetCurrentValues() {
     OutputData result = OutputData();
-    for (const auto& it : cell_info) {
-        result[it.first] = it.second->value;
+    for (const auto& cell : cell_info) {
+        result[cell->name] = cell->value;
     }
     return result;
 }

@@ -2,6 +2,7 @@
 #define SPREADSHEETENGINE_SOLUTION_H
 
 #include <iostream>
+
 #include <thread>
 #include <chrono>
 
@@ -9,7 +10,7 @@
 
 const int milliseconds = 0;
 
-inline ValueType sum(ValueType a, ValueType b) {    
+inline ValueType sum(ValueType a, ValueType b) {
     //std::this_thread::sleep_for(std::chrono::milliseconds(milliseconds));
     return a + b;
 }

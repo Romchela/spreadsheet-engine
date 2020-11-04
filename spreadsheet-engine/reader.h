@@ -20,7 +20,7 @@ public:
 
 class Reader {
 public:
-    static InputData Read(std::ifstream& input_file);
+    static InputData Read(std::ifstream& input_file, std::unordered_map<std::string, int>& ids);
 };
 
 #endif //SPREADSHEETENGINE_READER_H

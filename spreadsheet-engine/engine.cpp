@@ -64,7 +64,7 @@ bool test_solution(Solution& solution, const InputData& initial_data, const Inpu
     {
         Timer timer("    [small] ChangeCell method 1 call in average: ", modifications_small_data.size());
         for (const auto& it : modifications_small_data) {
-            solution.ChangeCell(it.first, it.second);
+            solution.ChangeCell(it.name, it.formula);
         }
     }
     if (!write_and_check(solution, output_path, solution_name, correct_solution_name, ".modifications_small.txt")) {
@@ -74,7 +74,7 @@ bool test_solution(Solution& solution, const InputData& initial_data, const Inpu
     {
         Timer timer("    [medium] ChangeCell method 1 call in average: ", modifications_medium_data.size());
         for (const auto& it : modifications_medium_data) {
-            solution.ChangeCell(it.first, it.second);
+            solution.ChangeCell(it.name, it.formula);
         }
     }
     if (!write_and_check(solution, output_path, solution_name, correct_solution_name, ".modifications_medium.txt")) {
@@ -84,7 +84,7 @@ bool test_solution(Solution& solution, const InputData& initial_data, const Inpu
     {
         Timer timer("    [large] ChangeCell method 1 call in average: ", modifications_large_data.size());
         for (const auto& it : modifications_large_data) {
-            solution.ChangeCell(it.first, it.second);
+            solution.ChangeCell(it.name, it.formula);
         }
     }
     if (!write_and_check(solution, output_path, solution_name, correct_solution_name, ".modifications_large.txt")) {
@@ -138,31 +138,34 @@ int main(int argc, char** argv) {
         return 1;
     }
 
+
+    std::unordered_map<std::string, int> ids;
+
     InputData initial_data;
     {
         Timer timer("Reading initial file time: ");
-        initial_data = Reader::Read(initial_file);
+        initial_data = Reader::Read(initial_file, ids);
         initial_file.close();
     }
 
     InputData modifications_small_data;
     {
         Timer timer("Reading small modifications file time: ");
-        modifications_small_data = Reader::Read(modifications_small_file);
+        modifications_small_data = Reader::Read(modifications_small_file, ids);
         modifications_small_file.close();
     }
 
     InputData modifications_medium_data;
     {
         Timer timer("Reading medium modifications file time: ");
-        modifications_medium_data = Reader::Read(modifications_medium_file);
+        modifications_medium_data = Reader::Read(modifications_medium_file, ids);
         modifications_medium_file.close();
     }
 
     InputData modifications_large_data;
     {
         Timer timer("Reading large modifications file time: ");
-        modifications_large_data = Reader::Read(modifications_large_file);
+        modifications_large_data = Reader::Read(modifications_large_file, ids);
         modifications_large_file.close();
     }
 
@@ -173,21 +176,26 @@ int main(int argc, char** argv) {
 
     // Run simple one thread solution.
     const std::string& correct_solution = "OneThreadSimple";
-    Solution* solution = new OneThreadSimpleSolution();
-    bool success = test_solution(*solution, initial_data, modifications_small_data, modifications_medium_data,
-                                 modifications_large_data, output_path, correct_solution);
-    delete solution;
-    if (!success) {
-        return 1;
+    
+    {
+        /*Solution* solution = new OneThreadSimpleSolution();
+        bool success = test_solution(*solution, initial_data, modifications_small_data, modifications_medium_data,
+            modifications_large_data, output_path, correct_solution);
+        delete solution;
+        if (!success) {
+            return 1;
+        }*/
     }
 
-    // Test fast solution, compare results to OneThreadSimple solution's output.
-    solution = new FastSolution();
-    success = test_solution(*solution, initial_data, modifications_small_data, modifications_medium_data, modifications_large_data,
-                            output_path, "FastSolution", correct_solution);
-    delete solution;
-    if (!success) {
-        return 1;
+    {
+        // Test fast solution, compare results to OneThreadSimple solution's output.
+        Solution* solution = new FastSolution();
+        bool success = test_solution(*solution, initial_data, modifications_small_data, modifications_medium_data, modifications_large_data,
+            output_path, "FastSolution", correct_solution);
+        delete solution;
+        if (!success) {
+            return 1;
+        }
     }
 
     return 0;
