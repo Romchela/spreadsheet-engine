@@ -52,6 +52,9 @@ private:
     // Queue of jobs. Each job is to calculate something for the cell which is stored in queue.
     Concurrency::concurrent_queue<int> queue;
 
+    moodycamel::BlockingConcurrentQueue<int> lock_free_queue;
+    std::atomic<int> done_consumers;
+
     std::atomic<int> count_to_recalculate;
 
     // concurrent_unordered_set doesn't work in C++17 (it uses deprecated method).
@@ -72,7 +75,7 @@ private:
     void InitialValuesCalculationThreadJob();
 
     void RecalculateCellsThreadJob();
-    void TraverseDAGThreadJob();
+    void FindRecalculationCellsThreadJob();
 
 public:
 

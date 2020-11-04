@@ -53,17 +53,14 @@ inline void runMultipleThreads(const std::function<void()>& function) {
 // -------------- DAG building --------------
 
 void FastSolution::BuildDAG(bool parallel, const InputData& input_data) {
-    DAG.clear();
-    cell_info.clear();
-    id_by_name.clear();
-    DAG.resize(input_data.size());
-    cell_info.resize(input_data.size());
-    starting_cells.clear();
-    calculated_cells_count = 0;
 
     auto add_edges = [&](const InputCellInfo& cell_info_io) {
+        
         CellInfo* info = new CellInfo(cell_info_io.formula, cell_info_io.name);
         int cell = cell_info_io.id;
+        if (cell_info[cell] != NULL) {
+            delete cell_info[cell];
+        }
         cell_info[cell] = info;
         id_by_name[cell_info_io.name] = cell;
 
@@ -104,15 +101,15 @@ void FastSolution::InitialValuesCalculationThreadJob() {
     int cells_count = cell_info.size();
     int cell;
 
-    while (calculated_cells_count.load() < cells_count) {
-        bool success = queue.try_pop(cell);
+    while (calculated_cells_count.load(std::memory_order_acquire) < cells_count) {
+        bool success = lock_free_queue.try_dequeue(cell);
         if (!success) {
             continue;
         }
 
         auto& c_info = cell_info[cell];
 
-        if (c_info->is_calculated.load()) {
+        if (c_info->is_calculated.load(std::memory_order_acquire)) {
             continue;
         }
 
@@ -146,17 +143,17 @@ void FastSolution::InitialValuesCalculationThreadJob() {
             continue;
         }   
         
-        c_info->value.store(value);
-        calculated_cells_count++;
+        c_info->value.store(value, std::memory_order_release);
+        calculated_cells_count.fetch_add(1, std::memory_order_release);
 
         for (const auto& it : DAG[cell]) {
             int next_str = it.first;
             const auto& next = cell_info.at(next_str);
                 
             if (!next->is_calculated.load()) {
-                next->unresolved_cells_count--;
-                if (next->unresolved_cells_count.load() == 0) {
-                    queue.push(it.first);
+                next->unresolved_cells_count.fetch_sub(1, std::memory_order_release);
+                if (next->unresolved_cells_count.load(std::memory_order_acquire) == 0) {
+                    lock_free_queue.enqueue(it.first);
                 }
             }
         }
@@ -166,9 +163,10 @@ void FastSolution::InitialValuesCalculationThreadJob() {
 
 void FastSolution::ParallelValuesCalculation() {
     queue.clear();
+    lock_free_queue = moodycamel::BlockingConcurrentQueue<int>(2 * cell_info.size());
     for (const auto& it : starting_cells) {
         cell_info.at(it)->total_dependency_count = 1;
-        queue.push(it);
+        lock_free_queue.enqueue(it);
     }
     
     runMultipleThreads([&]() { InitialValuesCalculationThreadJob(); });
@@ -181,30 +179,35 @@ void FastSolution::ParallelValuesCalculation() {
 
 void FastSolution::InitialCalculate(const InputData& input_data) {
 #ifdef _DEBUG
-    /*{
-        Timer timer("        Building DAG time: ");
+    {
+        //Timer timer("        Building DAG time: ");
         SequentialBuildDAG(input_data);
-    }*/
+    }
 #endif
 
     state = input_data;
+    std::for_each(std::execution::par_unseq, std::begin(DAG), std::end(DAG), [](Edges& e) { e.clear(); });
+    DAG.resize(input_data.size());
+    cell_info.resize(input_data.size());
+    starting_cells.clear();
+    calculated_cells_count = 0;
 
     {
-        Timer timer("        Parallel building DAG time: ");
+        //Timer timer("        Parallel building DAG time: ");
         ParallelBuildDAG(input_data);
     }
 
     {
-        Timer timer("        Parallel values calculation time: ");
+        //Timer timer("        Parallel values calculation time: ");
         ParallelValuesCalculation();
     }
 }
 
 // -------------- Change formula of a cell --------------
 
-// Not really critical number of operations, we can do it in one thread.
+
 void FastSolution::RecalculateDAG(int cell, const Formula& formula) {
-     
+    // Not really critical number of operations, we can do it in one thread.     
     for (const auto& formula_it : cell_info[cell]->formula) {
         if (formula_it.type == Addend::CELL) {
             for (auto& cell_it : DAG[formula_it.value]) {
@@ -224,6 +227,7 @@ void FastSolution::RecalculateDAG(int cell, const Formula& formula) {
 }
 
 void FastSolution::RecalculateCellsThreadJob() {
+    // TODO: use lock-free queue
     int cell;
     while (!queue.empty()) {
         bool success = queue.try_pop(cell);
@@ -293,41 +297,28 @@ void FastSolution::RecalculateCellsThreadJob() {
     }
 }
 
-void FastSolution::TraverseDAGThreadJob() {
-    int cell;
-    while (!queue.empty()) {
-        bool success = queue.try_pop(cell);
-        if (!success) {
-            continue;
-        }
+void FastSolution::FindRecalculationCellsThreadJob() {
+    do {
+        int cell;
+        while (lock_free_queue.try_dequeue(cell)) {
+            auto& info = cell_info.at(cell);
 
-        auto& info = cell_info.at(cell);
+            bool expected = true;
+            bool ok = info->is_calculated.compare_exchange_strong(expected, false);
+            if (!ok) {
+                continue;
+            }
 
-        bool expected = true;
-        bool ok = info->is_calculated.compare_exchange_strong(expected, false);
-        if (!ok) {
-            continue;
-        }
+            count_to_recalculate.fetch_add(1, std::memory_order_release);
 
-        int cnt = 0;
-        for (const auto& it : info->formula) {
-            if (it.type == Addend::CELL) {
-                int addend_cell = it.value;
-                cnt += !cell_info.at(addend_cell)->is_calculated.load();
-                break;
+            for (const auto& it : DAG[cell]) {
+                int next = it.first;
+                if (!it.second && cell_info.at(next)->is_calculated.load(std::memory_order_acquire)) {
+                    lock_free_queue.enqueue(next);
+                }
             }
         }
-
-        info->unresolved_cells_count = cnt;
-        count_to_recalculate++;
-
-        for (const auto& it : DAG[cell]) {
-            int next = it.first;
-            if (!it.second && cell_info.at(next)->is_calculated.load()) {
-                queue.push(next);
-            }
-        }
-    }
+    } while (done_consumers.fetch_add(1, std::memory_order_acq_rel) + 1 == std::thread::hardware_concurrency());
 }
 
 void FastSolution::ChangeCell(const std::string& cell, const Formula& formula) {
@@ -336,13 +327,15 @@ void FastSolution::ChangeCell(const std::string& cell, const Formula& formula) {
     
     RecalculateDAG(cell_id, formula);
 
-    queue.clear();
-    queue.push(cell_id);
     count_to_recalculate = 0;
 
+    lock_free_queue = moodycamel::BlockingConcurrentQueue<int>(2 * cell_info.size());
+    lock_free_queue.enqueue(cell_id);
+    done_consumers = 0;
+
     {
-        //Timer timer("TraverseDAGThreadJob time: ");
-        runMultipleThreads([&]() { TraverseDAGThreadJob(); });
+        //Timer timer("FindRecalculationCellsThreadJob time: ");
+        runMultipleThreads([&]() { FindRecalculationCellsThreadJob(); });
     }
     
     if (count_to_recalculate > 0.8 * cell_info.size()) {
@@ -350,6 +343,7 @@ void FastSolution::ChangeCell(const std::string& cell, const Formula& formula) {
     } else {
         queue.clear();
         queue.push(cell_id);
+        
         {
             //Timer timer("RecalculateCellsThreadJob time: ");
             runMultipleThreads([&]() { RecalculateCellsThreadJob(); });
