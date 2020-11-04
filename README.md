@@ -32,6 +32,8 @@ The program receives 5 arguments:
 
 Program entry point is `int main()` method in `engine.cpp`. It runs multiple solutions, calculates the time of execution and compares all the results. Four output files are generated for each solution: values of all cells after initial data load, values after all cell modifications with a small total dependency count, values after all medium modifications and after all large modifications.
 
+One of the solution uses lock-free queue implementation from https://github.com/cameron314/concurrentqueue
+
     
 ### Tests
 
@@ -114,11 +116,33 @@ C++17, visual studio, windows x64.
 
 ## Benchmark
 
+**Version 0.2**
+
+AMD Ryzen 7 3700 X 8-Core Processor 3.59 Ghz 16 GB RAM x64.
+Fast solution uses 16 threads.
+
+![](benchmark3.png)
+
+1) InitialCalculate OneThreadSimple `2003 ms` vs Fast `328 ms`. Fast solution **6.1 times faster**.
+2) ChangeCell for medium and small works quite fast (both solutions) `< 10 ms`.
+3) ChangeCell for large OneThreadSimple `682 ms` vs Fast `290 ms`. Fast solution **2.3 times faster**.
+
+Intel(R) Core(TM) i7-8550U CPU @ 1.80GHz 1.99 GHz RAM 16.0 GB x64.
+Fast solution uses 8 threads.
+
+![](benchmark2.png)
+
+1) InitialCalculate OneThreadSimple `2765 ms` vs Fast `690 ms`. Fast solution **4 times faster**.
+2) ChangeCell for medium and small works quite fast (both solutions) `~20 ms`.
+3) ChangeCell for large OneThreadSimple `882 ms` vs Fast `686 ms`. Fast solution **1.3 times faster**.
+
+**Version 0.1**
+
 Intel(R) Core(TM) i7-8550U CPU @ 1.80GHz 1.99 GHz RAM 16.0 GB x64.
 Fast solution uses 8 threads.
 
 
-![](benchmark.png)
+![](benchmark1.png)
 
 1) InitialCalculate OneThreadSimple `8813 ms` vs Fast `3094 ms`. Fast solution **2.8 times faster**.
 2) ChangeCell for medium and small works quite fast (both solutions) `~20 ms`.
@@ -127,9 +151,9 @@ Fast solution uses 8 threads.
 ## TODO and possible optimizations
 
 1) Support cycles. Formulas can be invalid and DAG becomes cyclic. We need to detect it and return error as value for all cells on a cycle.
-2) Currently cells are identified by their string name, we can map string -> int and use int everywhere instead of string. It can increase performance of hash maps.
+2) ~~Currently cells are identified by their string name, we can map string -> int and use int everywhere instead of string. It can increase performance of hash maps.~~
 3) [Fast solution] After cells are changed, we need to recalulate DAG and some edges shoud be deleted. Unfortunately, concurrent_unordered_map doesn't support deletion, so we just mark the edge as removed. After a lot of modifications we can store a lot of useless deleted edges, so we need to implement a background job which will periodically rebuild DAG (explicitly remove unused edges).
-4) [Fast solution] If we call ChangeCell method for a cell which has total dependency count of around 99% nodes, it will work a bit slower than if we had called InitialCalculate and built the whole graph from ground up. So, we need to store the total dependency count for each cell and choose how to update cell value depending on that value.
-5) [Fast solution] Profiling shows a thing that is expected: much of the performance depends on concurrent data structure implementations. We can try different implementations to choose a better one.
+4) ~~[Fast solution] If we call ChangeCell method for a cell which has total dependency count of around 99% nodes, it will work a bit slower than if we had called InitialCalculate and built the whole graph from ground up. So, we need to store the total dependency count for each cell and choose how to update cell value depending on that value.~~
+5) ~~[Fast solution] Profiling shows a thing that is expected: much of the performance depends on concurrent data structure implementations. We can try different implementations to choose a better one.~~
 6) Optimize IO (std::ifstream, std::ofstream slow?)
 7) Version for linux/macOS.
