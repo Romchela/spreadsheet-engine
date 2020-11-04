@@ -30,6 +30,9 @@ void Writer::write(const OutputData& output_data, const std::string& output_file
 
     std::ofstream output_file;
     output_file.open(output_file_path);
+    if (!output_file.is_open()) {
+        std::cout << "Cannot open the file " << output_file_path << std::endl;
+    }
     for (const auto& it : v) {
         output_file << it.first << " = " << it.second << std::endl;
     }

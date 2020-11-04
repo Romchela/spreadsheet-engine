@@ -1,4 +1,5 @@
 #include <iostream>
+#include <algorithm>
 #include "reader.h"
 #include "utils.h"
 

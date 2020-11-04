@@ -59,6 +59,7 @@ void FastSolution::BuildDAG(bool parallel, const InputData& input_data) {
     DAG.resize(input_data.size());
     cell_info.resize(input_data.size());
     starting_cells.clear();
+    calculated_cells_count = 0;
 
     auto add_edges = [&](const InputCellInfo& cell_info_io) {
         CellInfo* info = new CellInfo(cell_info_io.formula, cell_info_io.name);
@@ -303,11 +304,21 @@ void FastSolution::TraverseDAGThreadJob() {
         auto& info = cell_info.at(cell);
 
         bool expected = true;
-        bool ok = cell_info.at(cell)->is_calculated.compare_exchange_strong(expected, false);
+        bool ok = info->is_calculated.compare_exchange_strong(expected, false);
         if (!ok) {
             continue;
         }
 
+        int cnt = 0;
+        for (const auto& it : info->formula) {
+            if (it.type == Addend::CELL) {
+                int addend_cell = it.value;
+                cnt += !cell_info.at(addend_cell)->is_calculated.load();
+                break;
+            }
+        }
+
+        info->unresolved_cells_count = cnt;
         count_to_recalculate++;
 
         for (const auto& it : DAG[cell]) {
@@ -334,11 +345,15 @@ void FastSolution::ChangeCell(const std::string& cell, const Formula& formula) {
         runMultipleThreads([&]() { TraverseDAGThreadJob(); });
     }
     
-    queue.clear();
-    queue.push(cell_id);
-    {
-        //Timer timer("RecalculateCellsThreadJob time: ");
-        runMultipleThreads([&]() { RecalculateCellsThreadJob(); });
+    if (count_to_recalculate > 0.8 * cell_info.size()) {
+        InitialCalculate(state);
+    } else {
+        queue.clear();
+        queue.push(cell_id);
+        {
+            //Timer timer("RecalculateCellsThreadJob time: ");
+            runMultipleThreads([&]() { RecalculateCellsThreadJob(); });
+        }
     }
 }
 

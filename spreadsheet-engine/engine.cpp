@@ -145,6 +145,7 @@ int main(int argc, char** argv) {
     {
         Timer timer("Reading initial file time: ");
         initial_data = Reader::Read(initial_file, ids);
+        std::sort(initial_data.begin(), initial_data.end(), [](InputCellInfo& a, InputCellInfo& b) { return a.id < b.id; });
         initial_file.close();
     }
 
@@ -178,13 +179,13 @@ int main(int argc, char** argv) {
     const std::string& correct_solution = "OneThreadSimple";
     
     {
-        /*Solution* solution = new OneThreadSimpleSolution();
+        Solution* solution = new OneThreadSimpleSolution();
         bool success = test_solution(*solution, initial_data, modifications_small_data, modifications_medium_data,
             modifications_large_data, output_path, correct_solution);
         delete solution;
         if (!success) {
             return 1;
-        }*/
+        }
     }
 
     {
