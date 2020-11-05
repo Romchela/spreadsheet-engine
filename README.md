@@ -112,7 +112,7 @@ We change the cell `A`. First, build an array of cells reachable from `A` in par
 
 ## Requirements
 
-C++17, visual studio, windows x64.
+C++17, visual studio.
 
 ## Benchmark
 
