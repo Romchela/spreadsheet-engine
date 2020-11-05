@@ -139,7 +139,7 @@ Fast solution uses **16** threads.
 Intel(R) Core(TM) i7-8550U CPU @ 1.80GHz 1.99 GHz RAM 16.0 GB x64.
 Fast solution uses 8 threads.
 
-![](benchmarks/benchmark2.PNG)
+![](benchmarks/benchmark2.png)
 
 1) InitialCalculate OneThreadSimple `2765 ms` vs Fast `690 ms`. Fast solution **4 times faster**.
 2) ChangeCell for medium and small works quite fast (both solutions) `~20 ms`.
