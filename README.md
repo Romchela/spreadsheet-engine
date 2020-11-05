@@ -166,3 +166,4 @@ Fast solution uses **8** threads.
 6) Optimize IO (std::ifstream, std::ofstream slow?)
 7) Version for linux/macOS.
 8) [Fast solution] Use lock-free data structures (it's already used lock-free queue for some functions).
+9) Add/delete cell functionallity.
