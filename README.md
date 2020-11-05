@@ -166,3 +166,4 @@ Fast solution uses **8** threads.
 5) ~~[Fast solution] Profiling shows a thing that is expected: much of the performance depends on concurrent data structure implementations. We can try different implementations to choose a better one.~~
 6) Optimize IO (std::ifstream, std::ofstream slow?)
 7) Version for linux/macOS.
+8) [Fast solution] Use lock-free data structures (it's already used lock-free queue for some functions).
