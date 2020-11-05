@@ -147,8 +147,8 @@ Fast solution uses 8 threads.
 
 **Version 0.1**
 
-Intel(R) Core(TM) i7-8550U CPU @ 1.80GHz 1.99 GHz RAM 16.0 GB x64.
-Fast solution uses 8 threads.
+Intel(R) Core(TM) i7-8550U CPU @ 1.80GHz 1.99 GHz RAM 16.0 GB **x64**.
+Fast solution uses **8** threads.
 
 
 ![](benchmarks/benchmark1.png)
