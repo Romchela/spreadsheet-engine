@@ -118,10 +118,19 @@ C++17, visual studio, windows x64.
 
 **Version 0.2**
 
-AMD Ryzen 7 3700 X 8-Core Processor 3.59 Ghz 16 GB RAM x64.
-Fast solution uses 16 threads.
+AMD Ryzen 7 3700 X 8-Core Processor 3.59 Ghz 16 GB RAM **x86**.
+Fast solution uses **16** threads.
 
-![](benchmark3.jpg)
+![](benchmarks/benchmark4.jpg)
+
+1) InitialCalculate OneThreadSimple `1788 ms` vs Fast `287 ms`. Fast solution **6.2 times faster**.
+2) ChangeCell for medium and small works quite fast (both solutions) `< 10 ms`.
+3) ChangeCell for large OneThreadSimple `658 ms` vs Fast `260 ms`. Fast solution **2.5 times faster**.
+
+AMD Ryzen 7 3700 X 8-Core Processor 3.59 Ghz 16 GB RAM **x64**.
+Fast solution uses **16** threads.
+
+![](benchmarks/benchmark3.jpg)
 
 1) InitialCalculate OneThreadSimple `2003 ms` vs Fast `328 ms`. Fast solution **6.1 times faster**.
 2) ChangeCell for medium and small works quite fast (both solutions) `< 10 ms`.
@@ -130,7 +139,7 @@ Fast solution uses 16 threads.
 Intel(R) Core(TM) i7-8550U CPU @ 1.80GHz 1.99 GHz RAM 16.0 GB x64.
 Fast solution uses 8 threads.
 
-![](benchmark2.PNG)
+![](benchmarks/benchmark2.PNG)
 
 1) InitialCalculate OneThreadSimple `2765 ms` vs Fast `690 ms`. Fast solution **4 times faster**.
 2) ChangeCell for medium and small works quite fast (both solutions) `~20 ms`.
@@ -142,7 +151,7 @@ Intel(R) Core(TM) i7-8550U CPU @ 1.80GHz 1.99 GHz RAM 16.0 GB x64.
 Fast solution uses 8 threads.
 
 
-![](benchmark1.png)
+![](benchmarks/benchmark1.png)
 
 1) InitialCalculate OneThreadSimple `8813 ms` vs Fast `3094 ms`. Fast solution **2.8 times faster**.
 2) ChangeCell for medium and small works quite fast (both solutions) `~20 ms`.
