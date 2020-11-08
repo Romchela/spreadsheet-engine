@@ -136,8 +136,8 @@ Fast solution uses **16** threads.
 2) ChangeCell for medium and small works quite fast (both solutions) `< 10 ms`.
 3) ChangeCell for large OneThreadSimple `682 ms` vs Fast `290 ms`. Fast solution **2.3 times faster**.
 
-Intel(R) Core(TM) i7-8550U CPU @ 1.80GHz 1.99 GHz RAM 16.0 GB x64.
-Fast solution uses 8 threads.
+Intel(R) Core(TM) i7-8550U CPU @ 1.80GHz 1.99 GHz RAM 16.0 GB **x64**.
+Fast solution uses **8** threads.
 
 ![](benchmarks/benchmark2.png)
 
