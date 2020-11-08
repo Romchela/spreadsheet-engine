@@ -113,6 +113,7 @@ We change the cell `A`. First, build an array of cells reachable from `A` in par
 ## Requirements
 
 [Windows] C++17 (visual studio build tools).
+
 [MacOS] `brew install gcc@9`, `brew install tbb`
 
 ## Benchmark
