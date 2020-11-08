@@ -6,6 +6,7 @@
 #include <fstream>
 #include <sstream>
 #include <utility>
+#include <thread>
 
 // Class which calculate execution time. 
 // When is's created it saves now().
@@ -30,6 +31,10 @@ inline std::string trim(std::string s) {
     s.erase(0, s.find_first_not_of(' '));
     s.erase(s.find_last_not_of(' ') + 1);
     return s;
+}
+
+inline unsigned int get_threads_count() {
+  return std::thread::hardware_concurrency();
 }
 
 inline bool files_are_equal(const std::string& expected_path, const std::string& actual_path, std::string& error_message) {

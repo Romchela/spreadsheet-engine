@@ -5,7 +5,8 @@
 // Uses Jeff Preshing's semaphore implementation (under the terms of its
 // separate zlib license, see lightweightsemaphore.h).
 
-#pragma once
+#ifndef BLOCKINGCONCURRENTQUEUE_H
+#define BLOCKINGCONCURRENTQUEUE_H
 
 #include "concurrentqueue.h"
 #include "lightweightsemaphore.h"
@@ -580,3 +581,6 @@ namespace moodycamel
 	}
 
 }	// end namespace moodycamel
+
+
+#endif // BLOCKINGCONCURRENTQUEUE_H

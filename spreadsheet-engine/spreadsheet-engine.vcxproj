@@ -148,10 +148,10 @@
     <ClCompile Include="writer.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="blockingconcurrentqueue.h" />
-    <ClInclude Include="concurrentqueue.h" />
+    <ClInclude Include="lock-free-queue\blockingconcurrentqueue.h" />
+    <ClInclude Include="lock-free-queue\concurrentqueue.h" />
     <ClInclude Include="io-data.h" />
-    <ClInclude Include="lightweightsemaphore.h" />
+    <ClInclude Include="lock-free-queue\lightweightsemaphore.h" />
     <ClInclude Include="reader.h" />
     <ClInclude Include="solutions\fast.h" />
     <ClInclude Include="solutions\one-thread-simple.h" />

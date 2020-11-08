@@ -1,4 +1,5 @@
 #include <iostream>
+#include <thread>
 #include "reader.h"
 #include "io-data.h"
 #include "utils.h"
@@ -140,7 +141,7 @@ int main(int argc, char** argv) {
 
 
     std::unordered_map<std::string, int> ids;
-
+    std::cout << "Threads count = " << get_threads_count() << std::endl;
     InputData initial_data;
     {
         Timer timer("Reading initial file time: ");
@@ -176,16 +177,16 @@ int main(int argc, char** argv) {
     }
 
     // Run simple one thread solution.
-    const std::string& correct_solution = "OneThreadSimple";
+    const std::string& correct_solution = ""; //"OneThreadSimple";
     
     {
-        Solution* solution = new OneThreadSimpleSolution();
+        /*Solution* solution = new OneThreadSimpleSolution();
         bool success = test_solution(*solution, initial_data, modifications_small_data, modifications_medium_data,
             modifications_large_data, output_path, correct_solution);
         delete solution;
         if (!success) {
             return 1;
-        }
+        }*/
     }
 
     {

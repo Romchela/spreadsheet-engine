@@ -3,11 +3,19 @@
 // under the terms of its separate zlib license) that has been adapted and
 // extended by Cameron Desrochers.
 
-#pragma once
+#ifndef SEMAPHORE_H
+#define SEMAPHORE_H
 
 #include <cstddef> // For std::size_t
 #include <atomic>
 #include <type_traits> // For std::make_signed<T>
+
+#ifndef _WIN32
+  #include <cstdint>
+  #include <inttypes.h>
+  #include "concurrentqueue.h"
+#endif
+
 
 #if defined(_WIN32)
 // Avoid including windows.h in a header; we only need a handful of
@@ -410,3 +418,5 @@ namespace moodycamel
 	};
 
 }   // end namespace moodycamel
+
+#endif // SEMAPHORE_H

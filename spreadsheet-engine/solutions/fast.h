@@ -2,13 +2,21 @@
 #define SPREADSHEETENGINE_FAST_H
 
 #include <mutex>
-#include <concurrent_vector.h>
-#include <concurrent_unordered_map.h>
-#include <concurrent_unordered_set.h>
-#include <concurrent_queue.h>
+
+#ifdef _WIN32
+  #include <concurrent_vector.h>
+  #include <concurrent_unordered_map.h>
+  #include <concurrent_unordered_set.h>
+  #include <concurrent_queue.h>
+#else
+  #include <tbb/concurrent_unordered_map.h>
+  #include <tbb/concurrent_vector.h>
+  #include <tbb/concurrent_unordered_set.h>
+  #include <tbb/concurrent_queue.h>
+#endif
 
 #include "solution.h"
-#include "../blockingconcurrentqueue.h"
+#include "../lock-free-queue/blockingconcurrentqueue.h"
 
 // This solution based on bfs (breadth-first search) which is easy to parallelize.
 // InitialCalculate() and ChangeCell() methods have the same time and space complexity as OneThreadSimple solution has,
@@ -20,7 +28,11 @@ class FastSolution : public Solution {
 private:
 
     using IsDeleted = bool;
+#ifdef _WIN32
     using Edges = Concurrency::concurrent_vector<std::pair<int, IsDeleted>>;
+#else
+    using Edges = tbb::concurrent_vector<std::pair<int, IsDeleted>>;
+#endif
     struct CellInfo {
         CellInfo() = default;
         CellInfo(const Formula& formula, const std::string& name) : 
@@ -38,28 +50,43 @@ private:
     InputData state;
     std::atomic<int> recalculation_count = 0;
 
+#ifdef _WIN32
     Concurrency::concurrent_unordered_map<std::string, int> id_by_name;
 
     // Formula of these cells contains only numbers
     Concurrency::concurrent_vector<int> starting_cells;
+
+    // Queue of jobs. Each job is to calculate something for the cell which is stored in queue.
+    Concurrency::concurrent_queue<int> queue;
+    
+    // concurrent_unordered_set doesn't work in C++17 (it uses deprecated method).
+    // Use concurrent_unordered_map instead (value is useless param here).
+    Concurrency::concurrent_unordered_map<int, bool> need_to_recalculate;
+#else
+    tbb::concurrent_unordered_map<std::string, int> id_by_name;
+
+    // Formula of these cells contains only numbers
+    tbb::concurrent_vector<int> starting_cells;
+
+    // Queue of jobs. Each job is to calculate something for the cell which is stored in queue.
+    tbb::concurrent_queue<int> queue;
+    
+    // concurrent_unordered_set doesn't work in C++17 (it uses deprecated method).
+    // Use concurrent_unordered_map instead (value is useless param here).
+    tbb::concurrent_unordered_map<int, bool> need_to_recalculate;
+#endif
 
     // DAG is directed acyclic graph. Edge 'a' -> 'b' exists if and only if formula of 'b' contains 'a'.
     // For each 'a' cell we store an array of nodes which are connected from 'a'.
     std::vector<Edges> DAG;
 
     std::vector<CellInfo*> cell_info;
-
-    // Queue of jobs. Each job is to calculate something for the cell which is stored in queue.
-    Concurrency::concurrent_queue<int> queue;
-
+    
     moodycamel::BlockingConcurrentQueue<int> lock_free_queue;
     std::atomic<int> done_consumers;
 
     std::atomic<int> count_to_recalculate;
 
-    // concurrent_unordered_set doesn't work in C++17 (it uses deprecated method).
-    // Use concurrent_unordered_map instead (value is useless param here).
-    Concurrency::concurrent_unordered_map<int, bool> need_to_recalculate;
 
     std::atomic<int> calculated_cells_count = 0;
 

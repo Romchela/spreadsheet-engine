@@ -29,7 +29,8 @@
 
 // Also dual-licensed under the Boost Software License (see LICENSE.md)
 
-#pragma once
+#ifndef CONCURRENTQUEUE_H
+#define CONCURRENTQUEUE_H
 
 #if defined(__GNUC__)
 // Disable -Wconversion warnings (spuriously triggered when Traits::size_t and
@@ -3754,3 +3755,5 @@ namespace moodycamel {
 #if defined(__GNUC__)
 #pragma GCC diagnostic pop
 #endif
+
+#endif // CONCURRENTQUEUE_H

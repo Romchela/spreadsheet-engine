@@ -53,13 +53,13 @@
     <ClInclude Include="solutions\solution.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="concurrentqueue.h">
+    <ClInclude Include="lock-free-queue\concurrentqueue.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="blockingconcurrentqueue.h">
+    <ClInclude Include="lock-free-queue\blockingconcurrentqueue.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="lightweightsemaphore.h">
+    <ClInclude Include="lock-free-queue\lightweightsemaphore.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
