@@ -40,7 +40,7 @@ private:
         CellValue(bool is_calculated, ValueType value) : is_calculated(is_calculated), value(value) {}
 
         ValueType value;
-        bool is_calculated;
+        int is_calculated;
     };
 
 #ifdef _WIN32
