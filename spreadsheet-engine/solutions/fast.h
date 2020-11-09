@@ -27,20 +27,36 @@
 class FastSolution : public Solution {
 private:
 
-    using IsDeleted = bool;
+    struct OptionalCell {
+        OptionalCell() = default;
+        OptionalCell(int cell, bool is_deleted) : cell(cell), is_deleted(is_deleted) {}
+
+        int cell;
+        bool is_deleted;
+    };
+
+    struct CellValue {
+        CellValue() = default;
+        CellValue(bool is_calculated, ValueType value) : is_calculated(is_calculated), value(value) {}
+
+        ValueType value;
+        bool is_calculated;
+    };
+
 #ifdef _WIN32
-    using Edges = Concurrency::concurrent_vector<std::pair<int, IsDeleted>>;
+    using Edges = Concurrency::concurrent_vector<OptionalCell>;
 #else
-    using Edges = tbb::concurrent_vector<std::pair<int, IsDeleted>>;
+    using Edges = tbb::concurrent_vector<OptionalCell>;
 #endif
     struct CellInfo {
         CellInfo() = default;
         CellInfo(const Formula& formula, const std::string& name) : 
-            formula(formula), is_calculated(false), unresolved_cells_count(0), name(name), total_dependency_count(0) {}
+            formula(formula), value(CellValue(false, 0)), unresolved_cells_count(0), name(name), total_dependency_count(0) {}
 
         std::mutex mutex;
-        std::atomic<ValueType> value;
-        std::atomic<bool> is_calculated;
+
+        std::atomic<CellValue> value;
+
         Formula formula;
         std::atomic<int> unresolved_cells_count;
         std::string name;
@@ -86,6 +102,7 @@ private:
     std::atomic<int> done_consumers;
 
     std::atomic<int> count_to_recalculate;
+
 
 
     std::atomic<int> calculated_cells_count = 0;
