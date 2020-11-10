@@ -118,6 +118,18 @@ We change the cell `A`. First, build an array of cells reachable from `A` in par
 
 ## Benchmark
 
+**Version 0.3*
+
+[MacOS] MBP 15” 2019, macOS 10.15.7, Intel Core i7 9750H @ 2.6 GHz, 6-core, 32 GB 2400 MHz DDR4
+Fast solution uses **12** threads.
+
+![](benchmarks/benchmark5.jpg)
+
+[MacOS] MacBookPro15,2 Quad-Core Intel Core i7, 2.8 GHz, 16 GB
+Fast solution uses **8** threads.
+
+![](benchmarks/benchmark6.jpg)
+
 **Version 0.2**
 
 [Windows] AMD Ryzen 7 3700 X 8-Core Processor 3.59 Ghz 16 GB RAM **x86**.
