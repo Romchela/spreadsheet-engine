@@ -7,6 +7,7 @@
 #include "fast.h"
 #include "../utils.h"
 
+
 // -------------- Common methods--------------
 
 inline ValueType FastSolution::CalculateCellValue(int cell, const Formula& formula) {
@@ -177,13 +178,6 @@ void FastSolution::ParallelValuesCalculation() {
 }
 
 void FastSolution::InitialCalculate(const InputData& input_data) {
-#ifdef _DEBUG
-    {
-        Timer timer("        Building DAG time: ");
-        SequentialBuildDAG(input_data);
-    }
-#endif
-
     state = input_data;
     std::for_each(std::execution::par_unseq, std::begin(DAG), std::end(DAG), [](Edges& e) { e.clear(); });
     DAG.resize(input_data.size());
@@ -263,7 +257,7 @@ void FastSolution::RecalculateCellsThreadJob() {
                     value = sum(value, addend_value.value);
 
 #ifdef _DEBUG
-                    if (!addend_value.first) {
+                    if (!addend_value.is_calculated) {
                         std::cout << std::endl << "FAILED!!! cell should be calculated" << std::endl;
                         exit(1);
                     }
@@ -320,7 +314,7 @@ void FastSolution::FindRecalculationCellsThreadJob() {
             }
 
             count_to_recalculate++;
-            need_to_recalculate.insert(std::make_pair(cell, true));
+            need_to_recalculate.push_back(cell);
 
             for (const auto& it : DAG[cell]) {
                 int next = it.cell;
@@ -355,8 +349,8 @@ void FastSolution::ChangeCell(const std::string& cell, const Formula& formula) {
 #ifdef _DEBUG
         Timer timer("count_unresolved_cells time: ");
 #endif
-        auto count_unresolved_cells = [&](const std::pair<int, bool>& to_recalculate) {
-            auto& info = cell_info.at(to_recalculate.first);
+        auto count_unresolved_cells = [&](int to_recalculate) {
+            auto& info = cell_info.at(to_recalculate);
             int cnt = 0;
             for (const auto& formula_it : info->formula) {
                 if (formula_it.type == Addend::CELL) {
@@ -368,14 +362,14 @@ void FastSolution::ChangeCell(const std::string& cell, const Formula& formula) {
             }
             info->unresolved_cells_count.store(cnt);
         };
-        auto lambda = [&](const std::pair<int, bool>& it) { count_unresolved_cells(it); };
+        auto lambda = [&](int it) { count_unresolved_cells(it); };
         std::for_each(std::execution::par_unseq, std::begin(need_to_recalculate), std::end(need_to_recalculate), lambda);
     }
 
 #ifdef _DEBUG
     int cnt = 0;
     for (auto it : cell_info) {
-        cnt += !it->value.load().first;
+        cnt += !it->value.load().is_calculated;
     }
     if (cnt != count_to_recalculate.load()) {
         std::cout << std::endl << "FAIL!!! [FindRecalculationCellsThreadJob] count_to_recalculate is wrong" << std::endl;
@@ -398,7 +392,7 @@ void FastSolution::ChangeCell(const std::string& cell, const Formula& formula) {
 
 #ifdef _DEBUG
     for (auto it : cell_info) {
-        if (!it->value.load().first) {
+        if (!it->value.load().is_calculated) {
             std::cout << std::endl << "FAIL!!! [RecalculateCellsThreadJob] there is not calculated cell " << it->name << std::endl;
             exit(1);
         }

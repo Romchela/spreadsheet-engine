@@ -75,9 +75,7 @@ private:
     // Queue of jobs. Each job is to calculate something for the cell which is stored in queue.
     Concurrency::concurrent_queue<int> queue;
     
-    // concurrent_unordered_set doesn't work in C++17 (it uses deprecated method).
-    // Use concurrent_unordered_map instead (value is useless param here).
-    Concurrency::concurrent_unordered_map<int, bool> need_to_recalculate;
+    Concurrency::concurrent_vector<int> need_to_recalculate;
 #else
     tbb::concurrent_unordered_map<std::string, int> id_by_name;
 
@@ -87,9 +85,7 @@ private:
     // Queue of jobs. Each job is to calculate something for the cell which is stored in queue.
     tbb::concurrent_queue<int> queue;
     
-    // concurrent_unordered_set doesn't work in C++17 (it uses deprecated method).
-    // Use concurrent_unordered_map instead (value is useless param here).
-    tbb::concurrent_unordered_map<int, bool> need_to_recalculate;
+    tbb::concurrent_vector<int> need_to_recalculate;
 #endif
 
     // DAG is directed acyclic graph. Edge 'a' -> 'b' exists if and only if formula of 'b' contains 'a'.
