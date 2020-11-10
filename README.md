@@ -104,7 +104,7 @@ Parallel DAG building (directed acyclic graph) - the same as dependency graph in
 
 #### ChangeCell method:
 
-We change the cell `A`. First, build an array of cells reachable from `A` in parallel by DAG. Then, recalulate values of these cells. We don't have top sort here, so the algorithm is a bit different. Push `A` to the queue as a starting state. Repeat while queue is not empty: get a cell from the queue and check if all cells in the formula are recalculated. If yes, we can recalculate the value and push all adjacent nodes, otherwise we push `A` one more time to the queue and start a new iteration.
+We change the cell `A`. First, build an array of cells reachable from `A` in parallel by DAG. After that, we calculate number of uncalculated cells in formula for each cell. Then, recalulate values of these cells. We don't have top sort here, so the algorithm is a bit different. Push `A` to the queue as a starting state. Repeat while queue is not empty: get a cell from the queue, recalculate the value and push all adjacent nodes if all cells in formula are resolved.
 
 **Time complexity:** O(g), g - number of cells reachable from `A`.
 
@@ -118,7 +118,7 @@ We change the cell `A`. First, build an array of cells reachable from `A` in par
 
 ## Benchmark
 
-**Version 0.3**
+**Version 0.3** (Optimized fast solution, ChangeCell always relcalculates cells which are required)
 
 [**Windows**] AMD Ryzen 7 3700 X 8-Core Processor 3.59 Ghz 16 GB RAM **x86**.
 Fast solution uses **16** threads.
@@ -135,7 +135,7 @@ Fast solution uses **8** threads.
 
 ![](benchmarks/benchmark6.jpg)
 
-**Version 0.2**
+**Version 0.2** (Optimized one-thread and fast solutions, rebuild all graph if ChangeCell affect more than 80% cells)
 
 [**Windows**] AMD Ryzen 7 3700 X 8-Core Processor 3.59 Ghz 16 GB RAM **x86**.
 Fast solution uses **16** threads.
