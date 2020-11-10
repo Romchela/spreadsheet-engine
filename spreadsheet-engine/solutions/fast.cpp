@@ -178,7 +178,6 @@ void FastSolution::ParallelValuesCalculation() {
 }
 
 void FastSolution::InitialCalculate(const InputData& input_data) {
-    state = input_data;
     std::for_each(std::execution::par_unseq, std::begin(DAG), std::end(DAG), [](Edges& e) { e.clear(); });
     DAG.resize(input_data.size());
     cell_info.resize(input_data.size());
@@ -329,7 +328,6 @@ void FastSolution::FindRecalculationCellsThreadJob() {
 
 void FastSolution::ChangeCell(const std::string& cell, const Formula& formula) {
     int cell_id = id_by_name[cell];
-    state[cell_id].formula = formula;
     RecalculateDAG(cell_id, formula);
      
     // Find cells which we need to recalculate

@@ -63,7 +63,6 @@ private:
         std::atomic<int> total_dependency_count;
     };
     
-    InputData state;
     std::atomic<int> recalculation_count = 0;
 
 #ifdef _WIN32
