@@ -27,20 +27,36 @@
 class FastSolution : public Solution {
 private:
 
-    using IsDeleted = bool;
+    struct OptionalCell {
+        OptionalCell() = default;
+        OptionalCell(int cell, bool is_deleted) : cell(cell), is_deleted(is_deleted) {}
+
+        int cell;
+        bool is_deleted;
+    };
+
+    struct CellValue {
+        CellValue() = default;
+        CellValue(bool is_calculated, ValueType value) : is_calculated(is_calculated), value(value) {}
+
+        ValueType value;
+        int is_calculated;
+    };
+
 #ifdef _WIN32
-    using Edges = Concurrency::concurrent_vector<std::pair<int, IsDeleted>>;
+    using Edges = Concurrency::concurrent_vector<OptionalCell>;
 #else
-    using Edges = tbb::concurrent_vector<std::pair<int, IsDeleted>>;
+    using Edges = tbb::concurrent_vector<OptionalCell>;
 #endif
     struct CellInfo {
         CellInfo() = default;
         CellInfo(const Formula& formula, const std::string& name) : 
-            formula(formula), is_calculated(false), unresolved_cells_count(0), name(name), total_dependency_count(0) {}
+            formula(formula), value(CellValue(false, 0)), unresolved_cells_count(0), name(name), total_dependency_count(0) {}
 
         std::mutex mutex;
-        std::atomic<ValueType> value;
-        std::atomic<bool> is_calculated;
+
+        std::atomic<CellValue> value;
+
         Formula formula;
         std::atomic<int> unresolved_cells_count;
         std::string name;
@@ -59,9 +75,7 @@ private:
     // Queue of jobs. Each job is to calculate something for the cell which is stored in queue.
     Concurrency::concurrent_queue<int> queue;
     
-    // concurrent_unordered_set doesn't work in C++17 (it uses deprecated method).
-    // Use concurrent_unordered_map instead (value is useless param here).
-    Concurrency::concurrent_unordered_map<int, bool> need_to_recalculate;
+    Concurrency::concurrent_vector<int> need_to_recalculate;
 #else
     tbb::concurrent_unordered_map<std::string, int> id_by_name;
 
@@ -71,9 +85,7 @@ private:
     // Queue of jobs. Each job is to calculate something for the cell which is stored in queue.
     tbb::concurrent_queue<int> queue;
     
-    // concurrent_unordered_set doesn't work in C++17 (it uses deprecated method).
-    // Use concurrent_unordered_map instead (value is useless param here).
-    tbb::concurrent_unordered_map<int, bool> need_to_recalculate;
+    tbb::concurrent_vector<int> need_to_recalculate;
 #endif
 
     // DAG is directed acyclic graph. Edge 'a' -> 'b' exists if and only if formula of 'b' contains 'a'.
@@ -86,6 +98,7 @@ private:
     std::atomic<int> done_consumers;
 
     std::atomic<int> count_to_recalculate;
+
 
 
     std::atomic<int> calculated_cells_count = 0;

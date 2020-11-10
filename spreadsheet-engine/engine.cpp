@@ -177,7 +177,7 @@ int main(int argc, char** argv) {
     }
 
     // Run simple one thread solution.
-    const std::string& correct_solution = ""; //"OneThreadSimple";
+    const std::string& correct_solution = "OneThreadSimple";
     
     {
         /*Solution* solution = new OneThreadSimpleSolution();
