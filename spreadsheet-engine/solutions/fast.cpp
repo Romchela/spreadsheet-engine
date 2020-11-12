@@ -109,30 +109,9 @@ void FastSolution::InitialValuesCalculationThreadJob() {
             continue;
         }
 
+
         const auto& formula = c_info->formula;
-        ValueType value = 0;
-        for (const auto& it : formula) {
-            switch (it.type) {
-                case Addend::CELL: {
-                    int addend_cell = it.value;
-                    auto& addend_info = cell_info.at(addend_cell);
-                    CellValue addend_value = addend_info->value.load();
-                    assert(addend_value.is_calculated);
-                    value = sum(value, addend_value.value);
-                    break;
-                }
-
-                case Addend::VALUE: {
-                    ValueType addend = it.value;
-                    value = sum(value, addend);
-                    break;
-                }
-
-                default:
-                    assert(false);
-                }
-        }
-       
+        ValueType value = CalculateCellValue(cell, formula);
 
         bool expected = false;
         bool ok = c_info->value.compare_exchange_strong(cell_value, CellValue(true, value));
@@ -247,34 +226,7 @@ void FastSolution::RecalculateCellsThreadJob() {
         }
 
         const auto& formula = c_info->formula;
-        ValueType value = 0;
-        for (const auto& it : formula) {
-            switch (it.type) {
-                case Addend::CELL: {
-                    int addend_cell = it.value;
-                    const auto& addend_value = cell_info.at(addend_cell)->value.load();
-                    value = sum(value, addend_value.value);
-
-#ifdef _DEBUG
-                    if (!addend_value.is_calculated) {
-                        std::cout << std::endl << "FAILED!!! cell should be calculated" << std::endl;
-                        exit(1);
-                    }
-#endif
-
-                    break;
-                }
-
-                case Addend::VALUE: {
-                    ValueType addend = it.value;
-                    value = sum(value, addend);
-                    break;
-                }
-
-                default:
-                    assert(false);
-            }
-        }
+        ValueType value = CalculateCellValue(cell, formula);
         
         bool ok = c_info->value.compare_exchange_strong(cell_value, CellValue(true, value));
         
