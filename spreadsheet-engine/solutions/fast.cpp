@@ -29,7 +29,7 @@ inline ValueType FastSolution::CalculateCellValue(int cell, const Formula& formu
 
             default:
                 assert(false);
-            }
+        }
     }
     return value;
 }
@@ -137,8 +137,7 @@ void FastSolution::InitialValuesCalculationThreadJob() {
 
 
 void FastSolution::ParallelValuesCalculation() {
-    queue.clear();
-    lock_free_queue = moodycamel::BlockingConcurrentQueue<int>(2 * cell_info.size());
+    lock_free_queue = moodycamel::BlockingConcurrentQueue<int>(cell_info.size());
     for (const auto& it : starting_cells) {
         cell_info.at(it)->total_dependency_count = 1;
         lock_free_queue.enqueue(it);
@@ -157,6 +156,8 @@ void FastSolution::ParallelValuesCalculation() {
 }
 
 void FastSolution::InitialCalculate(const InputData& input_data) {
+
+    // Data initialization
     std::for_each(std::execution::par_unseq, std::begin(DAG), std::end(DAG), [](Edges& e) { e.clear(); });
     DAG.resize(input_data.size());
     cell_info.resize(input_data.size());
@@ -229,7 +230,6 @@ void FastSolution::RecalculateCellsThreadJob() {
         ValueType value = CalculateCellValue(cell, formula);
         
         bool ok = c_info->value.compare_exchange_strong(cell_value, CellValue(true, value));
-        
         if (!ok) {
             continue;
         }
@@ -288,7 +288,7 @@ void FastSolution::ChangeCell(const std::string& cell, const Formula& formula) {
         Timer timer("FindRecalculationCellsThreadJob time: ");
 #endif
         count_to_recalculate = 0;
-        lock_free_queue = moodycamel::BlockingConcurrentQueue<int>(2 * cell_info.size());
+        lock_free_queue = moodycamel::BlockingConcurrentQueue<int>(cell_info.size());
         lock_free_queue.enqueue(cell_id);
         done_consumers = 0;
         runMultipleThreads([&]() { FindRecalculationCellsThreadJob(); });
@@ -334,7 +334,7 @@ void FastSolution::ChangeCell(const std::string& cell, const Formula& formula) {
 #ifdef _DEBUG
         Timer timer("RecalculateCellsThreadJob time: ");
 #endif
-        lock_free_queue = moodycamel::BlockingConcurrentQueue<int>(2 * cell_info.size());
+        lock_free_queue = moodycamel::BlockingConcurrentQueue<int>(count_to_recalculate.load());
         lock_free_queue.enqueue(cell_id);
         calculated_cells_count = cell_info.size() - count_to_recalculate.load();
         runMultipleThreads([&]() { RecalculateCellsThreadJob(); });

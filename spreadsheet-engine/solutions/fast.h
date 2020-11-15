@@ -71,9 +71,6 @@ private:
     // Formula of these cells contains only numbers
     Concurrency::concurrent_vector<int> starting_cells;
 
-    // Queue of jobs. Each job is to calculate something for the cell which is stored in queue.
-    Concurrency::concurrent_queue<int> queue;
-    
     Concurrency::concurrent_vector<int> need_to_recalculate;
 #else
     tbb::concurrent_unordered_map<std::string, int> id_by_name;
@@ -81,9 +78,6 @@ private:
     // Formula of these cells contains only numbers
     tbb::concurrent_vector<int> starting_cells;
 
-    // Queue of jobs. Each job is to calculate something for the cell which is stored in queue.
-    tbb::concurrent_queue<int> queue;
-    
     tbb::concurrent_vector<int> need_to_recalculate;
 #endif
 
@@ -97,8 +91,6 @@ private:
     std::atomic<int> done_consumers;
 
     std::atomic<int> count_to_recalculate;
-
-
 
     std::atomic<int> calculated_cells_count = 0;
 
