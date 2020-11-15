@@ -48,6 +48,7 @@ private:
 #else
     using Edges = tbb::concurrent_vector<OptionalCell>;
 #endif
+
     struct CellInfo {
         CellInfo() = default;
         CellInfo(const Formula& formula, const std::string& name) : 
@@ -66,6 +67,11 @@ private:
     std::atomic<int> recalculation_count = 0;
 
 #ifdef _WIN32
+
+    // DAG is directed acyclic graph. Edge 'a' -> 'b' exists if and only if formula of 'b' contains 'a'.
+    // For each 'a' cell we store an array of nodes which are connected from 'a'.
+    Concurrency::concurrent_vector<Edges> DAG;
+
     Concurrency::concurrent_unordered_map<std::string, int> id_by_name;
 
     // Formula of these cells contains only numbers
@@ -73,6 +79,11 @@ private:
 
     Concurrency::concurrent_vector<int> need_to_recalculate;
 #else
+
+    // DAG is directed acyclic graph. Edge 'a' -> 'b' exists if and only if formula of 'b' contains 'a'.
+    // For each 'a' cell we store an array of nodes which are connected from 'a'.
+    tbb::concurrent_vector<Edges> DAG;
+
     tbb::concurrent_unordered_map<std::string, int> id_by_name;
 
     // Formula of these cells contains only numbers
@@ -81,9 +92,7 @@ private:
     tbb::concurrent_vector<int> need_to_recalculate;
 #endif
 
-    // DAG is directed acyclic graph. Edge 'a' -> 'b' exists if and only if formula of 'b' contains 'a'.
-    // For each 'a' cell we store an array of nodes which are connected from 'a'.
-    std::vector<Edges> DAG;
+    
 
     std::vector<CellInfo*> cell_info;
     
