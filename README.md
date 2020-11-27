@@ -183,6 +183,6 @@ Fast solution uses **8** threads.
 4) ~~[Fast solution] If we call ChangeCell method for a cell which has total dependency count of around 99% nodes, it will work a bit slower than if we had called InitialCalculate and built the whole graph from ground up. So, we need to store the total dependency count for each cell and choose how to update cell value depending on that value.~~
 5) ~~[Fast solution] Profiling shows a thing that is expected: much of the performance depends on concurrent data structure implementations. We can try different implementations to choose a better one.~~
 6) Optimize IO (std::ifstream, std::ofstream slow?)
-7) Version for linux/macOS.
+7) ~~Version for linux/macOS.~~
 8) [Fast solution] Use lock-free data structures (it's already used lock-free queue for some functions).
 9) Add/delete cell functionallity.
